@@ -1,2 +1,3 @@
 libs
 flickr-syncp.flickrToken
+*.pyc
