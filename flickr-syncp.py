@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys
+import urllib2
 
 # Load third party dependencies, check in /libs folder if you've installed them there
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/libs')
@@ -18,5 +19,8 @@ if __name__ == "__main__":
         storage = FlickrStorage(config)
         tree_walker = TreeWalker(storage)
         tree_walker.walk()
+    except urllib2.URLError:
+        print "Network connection interrupted"
+        sys.exit()
     except KeyboardInterrupt:
         sys.exit()

@@ -2,6 +2,7 @@ import os
 import __main__
 import webbrowser
 import time
+import urllib2
 from storage import Storage
 import flickr_api
 from flickr_api.api import flickr
@@ -9,6 +10,7 @@ from file_info import FileInfo
 from folder_info import FolderInfo
 
 THROTTLING = 1
+RETRY = 7
 
 class FlickrStorage(Storage):
 
@@ -57,8 +59,13 @@ class FlickrStorage(Storage):
         self._is_authenticated = True
 
     def _call_remote(self, fn):
-        # Retry
-
-        # Throttling
+        backoff = [0, 1, 3, 5, 10, 30, 60]
         time.sleep(THROTTLING)
+        for i in range(RETRY):
+            if i > 0:
+                time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
+            try:
+                return fn()
+            except urllib2.URLError:
+                pass
         return fn()
