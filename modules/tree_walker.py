@@ -31,7 +31,7 @@ class TreeWalker(object):
     def print_files(self, prefix, files):
         last = len(files) - 1
         for i, x in enumerate(files):
-            print prefix + self.format_node(x.name, i == last)
+            print prefix + self.format_node(x.name + " (" + x.checksum + ")" if x.checksum else x.name, i == last)
 
     def format_node(self, text, is_last):
         return (UNICODE_LAST_NODE if is_last else UNICODE_NODE) + text

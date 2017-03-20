@@ -9,8 +9,8 @@ from flickr_api.api import flickr
 from file_info import FileInfo
 from folder_info import FolderInfo
 
-THROTTLING = 1
-RETRY = 7
+DEFAULT_THROTTLING = 0.5
+DEFAULT_RETRY = 7
 
 class FlickrStorage(Storage):
 
@@ -18,6 +18,8 @@ class FlickrStorage(Storage):
         self._config = config
         self._is_authenticated = False
         self._user = None
+        self._retry = DEFAULT_RETRY
+        self._throttling = float(config.network.get('throttling') or DEFAULT_THROTTLING)
 
     def list_folders(self):
         self._authenticate()
@@ -28,9 +30,18 @@ class FlickrStorage(Storage):
     def list_files(self, folder):
         self._authenticate()
         photo = self._photosets[folder.id]
-        photos = self._call_remote(photo.getPhotos)
-        return [FileInfo(id=x.id, name=x.title if x.title else x.id, checksum="") for x in photos]
-        # return photos[0].getInfo()
+        photos = self._call_remote(photo.getPhotos, extras='original_format,tags')
+        return [self._get_file_info(x) for x in photos]
+
+    def _get_file_info(self, photo):
+        name = photo.title if photo.title else photo.id
+        checksum = None
+        if photo.originalformat:
+            name += "." + photo.originalformat
+        if photo.tags:
+            tags = photo.tags.split()
+            checksum = next((tag.split('=')[1] for tag in tags if tag.split('=')[0] == "checksum:md5"), None)
+        return FileInfo(id=photo.id, name=name, checksum=checksum)
 
     def _authenticate(self):
         if self._is_authenticated:
@@ -38,9 +49,7 @@ class FlickrStorage(Storage):
 
         flickr_api.set_keys(api_key = self._config.flickr['api_key'], api_secret = self._config.flickr['api_secret'])
 
-        token_path = self._config.paths['token']
-        if not os.path.isabs(token_path):
-            token_path = os.path.join(os.path.abspath(os.path.dirname(__main__.__file__)), token_path)
+        token_path = os.path.splitext(os.path.abspath(__main__.__file__))[0] + '.flickrToken'
         if os.path.isfile(token_path):
            auth_handler = flickr_api.auth.AuthHandler.load(token_path) 
 
@@ -58,14 +67,17 @@ class FlickrStorage(Storage):
         self._user = flickr_api.test.login()
         self._is_authenticated = True
 
-    def _call_remote(self, fn):
+    def _call_remote(self, fn, **kwargs):
         backoff = [0, 1, 3, 5, 10, 30, 60]
-        time.sleep(THROTTLING)
-        for i in range(RETRY):
+        if self._throttling > 0:
+            time.sleep(self._throttling)
+        for i in range(self._retry):
             if i > 0:
+                print "retry %r" % i
                 time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
             try:
-                return fn()
-            except urllib2.URLError:
-                pass
-        return fn()
+                return fn(**kwargs)
+            except urllib2.URLError, e:
+                print "%r" % e
+                # pass
+        return fn(**kwargs)

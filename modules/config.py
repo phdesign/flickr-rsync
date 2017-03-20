@@ -10,4 +10,4 @@ class Config(object):
         config.read(ini_path)
 
         self.flickr = dict(config.items('Flickr'))
-        self.paths = dict(config.items('Paths'))
+        self.network = dict(config.items('Network'))
