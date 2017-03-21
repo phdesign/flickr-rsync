@@ -21,7 +21,7 @@ if __name__ == "__main__":
         tree_walker = TreeWalker(storage)
         print "Local"
         tree_walker.walk()
-        sys.exit()
+        # sys.exit()
 
         storage = FlickrStorage(config)
         tree_walker = TreeWalker(storage)

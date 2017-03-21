@@ -43,7 +43,7 @@ class TreeWalker(object):
             name = x['name']
             filesize = "{:>{}}".format(x['filesize'], filesize_colwidth)
             checksum = "{:.6}".format(x['checksum'])
-            meta = [x for x in [filesize, checksum] if x is not None]
+            meta = [x for x in [filesize, checksum] if x]
             if len(meta) > 0:
                 name = "[%s] " % " ".join(meta) + name
             print prefix + self.format_leaf(name, i == last)
