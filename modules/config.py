@@ -11,3 +11,4 @@ class Config(object):
 
         self.flickr = dict(config.items('Flickr'))
         self.network = dict(config.items('Network'))
+        self.paths = dict(config.items('Paths'))

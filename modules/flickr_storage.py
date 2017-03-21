@@ -25,11 +25,13 @@ class FlickrStorage(Storage):
         self._authenticate()
         photo_sets = self._call_remote(self._user.getPhotosets)
         self._photosets = {x.id: x for x in photo_sets}
+        # TODO: Iterate through pages
         return [FolderInfo(id=x.id, name=x.title, checksum="") for x in photo_sets]
 
     def list_files(self, folder):
         self._authenticate()
         photo = self._photosets[folder.id]
+        # TODO: Iterate through pages
         photos = self._call_remote(photo.getPhotos, extras='original_format,tags')
         return [self._get_file_info(x) for x in photos]
 
