@@ -42,7 +42,7 @@ class FlickrStorage(Storage):
             name += "." + photo.originalformat
         if photo.tags:
             tags = photo.tags.split()
-            checksum = next((tag.split('=')[1] for tag in tags if tag.split('=')[0] == "checksum:md5"), None)
+            checksum = next((parts[1] for parts in (tag.split('=') for tag in tags) if parts[0] == "checksum:md5"), None)
         return FileInfo(id=photo.id, name=name, checksum=checksum)
 
     def _authenticate(self):

@@ -19,11 +19,14 @@ if __name__ == "__main__":
 
         storage = LocalStorage(config)
         tree_walker = TreeWalker(storage)
+        print "Local"
         tree_walker.walk()
         sys.exit()
 
         storage = FlickrStorage(config)
         tree_walker = TreeWalker(storage)
+        print
+        print "Remote"
         tree_walker.walk()
     except urllib2.URLError:
         print "Network connection interrupted"

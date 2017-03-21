@@ -4,4 +4,5 @@ class FileInfo(object):
         self.id = kwargs.get('id')
         self.name = kwargs.get('name')
         self.checksum = kwargs.get('checksum')
+        self.size = kwargs.get('size')
 
