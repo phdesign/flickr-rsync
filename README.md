@@ -14,6 +14,5 @@ pip install flickr_api --target ./libs
 * How to handle nested directories
 * Sort listings (use yeild instead of print?)
 * Modes: Tree / CSV
-* Include / exclude regex
-* Config defaults using .update() https://docs.python.org/2/library/stdtypes.html#dict.update 
+* Iterate through paged results from flickr
 

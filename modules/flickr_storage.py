@@ -1,4 +1,5 @@
 import os
+import re
 import __main__
 import webbrowser
 import time
@@ -9,6 +10,8 @@ from flickr_api.api import flickr
 from file_info import FileInfo
 from folder_info import FolderInfo
 
+MAX_PAGES = 100
+
 class FlickrStorage(Storage):
 
     def __init__(self, config):
@@ -17,20 +20,41 @@ class FlickrStorage(Storage):
         self._user = None
         self._retry = int(config.network['retry'])
         self._throttling = float(config.network['throttling'])
+        self._exclude = config.files['remote_exclude']
 
     def list_folders(self):
         self._authenticate()
-        photo_sets = self._call_remote(self._user.getPhotosets)
-        self._photosets = {x.id: x for x in photo_sets}
-        # TODO: Iterate through pages
-        return [FolderInfo(id=x.id, name=x.title, checksum="") for x in photo_sets]
+        all_photosets = []
+        page = 1
+        total_pages = 0
+        for i in range(0, MAX_PAGES):
+            paged_photosets = self._call_remote(self._user.getPhotosets, page=page)
+            all_photosets += paged_photosets
+            total_pages = paged_photosets.info.pages
+            page = paged_photosets.info.page
+            if page >= total_pages:
+                break
+
+        self._photosets = {x.id: x for x in all_photosets}
+        folders = [FolderInfo(id=x.id, name=x.title, checksum="") for x in all_photosets]
+        return [x for x in folders if (not self._exclude or not re.search(self._exclude, x.name, flags=re.IGNORECASE))]
 
     def list_files(self, folder):
         self._authenticate()
-        photo = self._photosets[folder.id]
-        # TODO: Iterate through pages
-        photos = self._call_remote(photo.getPhotos, extras='original_format,tags')
-        return [self._get_file_info(x) for x in photos]
+        all_photos = []
+        page = 1
+        total_pages = 0
+        photoset = self._photosets[folder.id]
+        for i in range(0, MAX_PAGES):
+            paged_photos = self._call_remote(photoset.getPhotos, extras='original_format,tags')
+            all_photos += paged_photos
+            total_pages = paged_photos.info.pages
+            page = paged_photos.info.page
+            if page >= total_pages:
+                break
+
+        files = [self._get_file_info(x) for x in all_photos]
+        return [x for x in files if (not self._exclude or not re.search(self._exclude, x.name, flags=re.IGNORECASE))]
 
     def _get_file_info(self, photo):
         name = photo.title if photo.title else photo.id

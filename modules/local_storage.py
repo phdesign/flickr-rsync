@@ -10,9 +10,9 @@ from folder_info import FolderInfo
 class LocalStorage(Storage):
     
     def __init__(self, config):
-        self._files_dir = config.paths['files_dir']
-        self._file_types = config.paths['local_file_types']
-        self._exclude_regex = config.paths['local_exclude']
+        self._files_dir = config.files['files_dir']
+        self._file_types = config.files['local_file_types']
+        self._exclude = config.files['local_exclude']
 
     def md5_checksum(self, file_path):
         with open(file_path, 'rb') as fh:
@@ -28,7 +28,7 @@ class LocalStorage(Storage):
         return [
             FolderInfo(id=i, name=x)
             for i, x in enumerate(os.listdir(self._files_dir))
-            if (not self._exclude_regex or not re.search(self._exclude_regex, x, flags=re.IGNORECASE)) and
+            if (not self._exclude or not re.search(self._exclude, x, flags=re.IGNORECASE)) and
                 os.path.isdir(os.path.join(self._files_dir, x))
         ]
 
@@ -42,6 +42,6 @@ class LocalStorage(Storage):
         return [
             FileInfo(id=i, name=name, checksum=self.md5_checksum(path), size=os.path.getsize(path))
             for i, (name, path) in enumerate((os.path.basename(x), x) for x in files)
-            if (not self._exclude_regex or not re.search(self._exclude_regex, path, flags=re.IGNORECASE)) and
+            if (not self._exclude or not re.search(self._exclude, path, flags=re.IGNORECASE)) and
                 os.path.isfile(path)
         ]
