@@ -3,6 +3,7 @@ import re
 import __main__
 import webbrowser
 import time
+import datetime
 import urllib2
 from storage import Storage
 import flickr_api
@@ -11,6 +12,7 @@ from file_info import FileInfo
 from folder_info import FolderInfo
 
 MAX_PAGES = 100
+TOKEN_FILENAME = '.flickrToken'
 
 class FlickrStorage(Storage):
 
@@ -46,7 +48,8 @@ class FlickrStorage(Storage):
         total_pages = 0
         photoset = self._photosets[folder.id]
         for i in range(0, MAX_PAGES):
-            paged_photos = self._call_remote(photoset.getPhotos, extras='original_format,tags')
+            paged_photos = self._call_remote(photoset.getPhotos, extras='original_format,tags,last_update')
+            print "{0!r}".format([{'name': x.title + '.' + x.originalformat, 'modified': datetime.datetime.fromtimestamp(x.lastupdate).strftime('%Y-%m-%d %H:%M:%S')} for x in paged_photos])
             all_photos += paged_photos
             total_pages = paged_photos.info.pages
             page = paged_photos.info.page
@@ -72,7 +75,7 @@ class FlickrStorage(Storage):
 
         flickr_api.set_keys(api_key = self._config.flickr['api_key'], api_secret = self._config.flickr['api_secret'])
 
-        token_path = os.path.splitext(os.path.abspath(__main__.__file__))[0] + '.flickrToken'
+        token_path = os.path.join(os.path.split(os.path.abspath(__main__.__file__))[0], TOKEN_FILENAME)
         if os.path.isfile(token_path):
            auth_handler = flickr_api.auth.AuthHandler.load(token_path) 
 
@@ -84,7 +87,7 @@ class FlickrStorage(Storage):
             print "Please enter the OAuth verifier tag once logged in:"
             verifier_code = raw_input("> ")
             auth_handler.set_verifier(verifier_code)
-            auth_handler.save(token_file)
+            auth_handler.save(token_path)
 
         flickr_api.set_auth_handler(auth_handler)
         self._user = flickr_api.test.login()

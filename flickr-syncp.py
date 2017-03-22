@@ -17,10 +17,10 @@ if __name__ == "__main__":
         config = Config()
         config.read()
 
-        storage = LocalStorage(config)
-        tree_walker = TreeWalker(storage)
-        print "Local"
-        tree_walker.walk()
+        # storage = LocalStorage(config)
+        # tree_walker = TreeWalker(storage)
+        # print "Local"
+        # tree_walker.walk()
         # sys.exit()
 
         storage = FlickrStorage(config)
