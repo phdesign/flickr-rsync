@@ -27,6 +27,8 @@ class TreeWalker(object):
         print self.format_leaf(folder.name, is_last)
 
         files = self._storage.list_files(folder)
+        if len(files) == 0:
+            return
         self._file_count += len(files)
         prefix = UNICODE_LAST_BRANCH if is_last else UNICODE_BRANCH
         self.print_files(prefix, files)

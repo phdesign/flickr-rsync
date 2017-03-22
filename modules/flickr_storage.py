@@ -9,17 +9,14 @@ from flickr_api.api import flickr
 from file_info import FileInfo
 from folder_info import FolderInfo
 
-DEFAULT_THROTTLING = 0.5
-DEFAULT_RETRY = 7
-
 class FlickrStorage(Storage):
 
     def __init__(self, config):
         self._config = config
         self._is_authenticated = False
         self._user = None
-        self._retry = DEFAULT_RETRY
-        self._throttling = float(config.network.get('throttling') or DEFAULT_THROTTLING)
+        self._retry = int(config.network['retry'])
+        self._throttling = float(config.network['throttling'])
 
     def list_folders(self):
         self._authenticate()
