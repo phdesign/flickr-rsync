@@ -1,3 +1,4 @@
 libs
 .flickrToken
 *.pyc
+.DS_Store

@@ -17,12 +17,16 @@ TOKEN_FILENAME = '.flickrToken'
 class FlickrStorage(Storage):
 
     def __init__(self, config):
-        self._config = config
         self._is_authenticated = False
         self._user = None
+        self._api_key = config.flickr['api_key']
+        self._api_secret = config.flickr['api_secret']
         self._retry = int(config.network['retry'])
         self._throttling = float(config.network['throttling'])
-        self._exclude = config.files['remote_exclude']
+        self._include = config.files['flickr_include']
+        self._include_dir = config.files['flickr_include_dir']
+        self._exclude = config.files['flickr_exclude']
+        self._exclude_dir = config.files['flickr_exclude_dir']
 
     def list_folders(self):
         self._authenticate()
@@ -39,7 +43,9 @@ class FlickrStorage(Storage):
 
         self._photosets = {x.id: x for x in all_photosets}
         folders = [FolderInfo(id=x.id, name=x.title, checksum="") for x in all_photosets]
-        return [x for x in folders if (not self._exclude or not re.search(self._exclude, x.name, flags=re.IGNORECASE))]
+        return [x for x in folders 
+            if (not self._include_dir or re.search(self._include_dir, x.name, flags=re.IGNORECASE)) and
+                (not self._exclude_dir or not re.search(self._exclude_dir, x.name, flags=re.IGNORECASE))]
 
     def list_files(self, folder):
         self._authenticate()
@@ -48,8 +54,7 @@ class FlickrStorage(Storage):
         total_pages = 0
         photoset = self._photosets[folder.id]
         for i in range(0, MAX_PAGES):
-            paged_photos = self._call_remote(photoset.getPhotos, extras='original_format,tags,last_update')
-            print "{0!r}".format([{'name': x.title + '.' + x.originalformat, 'modified': datetime.datetime.fromtimestamp(x.lastupdate).strftime('%Y-%m-%d %H:%M:%S')} for x in paged_photos])
+            paged_photos = self._call_remote(photoset.getPhotos, extras='original_format,tags')
             all_photos += paged_photos
             total_pages = paged_photos.info.pages
             page = paged_photos.info.page
@@ -57,7 +62,9 @@ class FlickrStorage(Storage):
                 break
 
         files = [self._get_file_info(x) for x in all_photos]
-        return [x for x in files if (not self._exclude or not re.search(self._exclude, x.name, flags=re.IGNORECASE))]
+        return [x for x in files 
+            if (not self._include or re.search(self._include, x.name, flags=re.IGNORECASE)) and
+                (not self._exclude or not re.search(self._exclude, x.name, flags=re.IGNORECASE))]
 
     def _get_file_info(self, photo):
         name = photo.title if photo.title else photo.id
@@ -73,7 +80,7 @@ class FlickrStorage(Storage):
         if self._is_authenticated:
             return
 
-        flickr_api.set_keys(api_key = self._config.flickr['api_key'], api_secret = self._config.flickr['api_secret'])
+        flickr_api.set_keys(api_key = self._api_key, api_secret = self._api_secret)
 
         token_path = os.path.join(os.path.split(os.path.abspath(__main__.__file__))[0], TOKEN_FILENAME)
         if os.path.isfile(token_path):
@@ -99,11 +106,9 @@ class FlickrStorage(Storage):
             time.sleep(self._throttling)
         for i in range(self._retry):
             if i > 0:
-                print "retry %r" % i
                 time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
             try:
                 return fn(**kwargs)
-            except urllib2.URLError, e:
-                print "%r" % e
-                # pass
+            except urllib2.URLError:
+                pass
         return fn(**kwargs)
