@@ -42,7 +42,7 @@ class FlickrStorage(Storage):
                 break
 
         self._photosets = {x.id: x for x in all_photosets}
-        folders = [FolderInfo(id=x.id, name=x.title, checksum="") for x in all_photosets]
+        folders = [FolderInfo(id=x.id, name=x.title) for x in all_photosets]
         return [x for x in folders 
             if (not self._include_dir or re.search(self._include_dir, x.name, flags=re.IGNORECASE)) and
                 (not self._exclude_dir or not re.search(self._exclude_dir, x.name, flags=re.IGNORECASE))]
