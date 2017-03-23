@@ -40,7 +40,7 @@ class LocalStorage(Storage):
         else:
             files = (os.path.join(folder_abs, x) for x in os.listdir(folder_abs))
         return [
-            FileInfo(id=i, name=name, checksum=self.md5_checksum(path), size=os.path.getsize(path))
+            FileInfo(id=i, name=name, checksum=self.md5_checksum(path))
             for i, (name, path) in enumerate((os.path.basename(x), x) for x in files)
             if (not self._exclude or not re.search(self._exclude, path, flags=re.IGNORECASE)) and
                 os.path.isfile(path)

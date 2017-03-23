@@ -16,9 +16,14 @@ DEFAULT_NETWORK = {
 }
 DEFAULT_FILES = {
     'files_dir': '',
-    'local_file_types': '*.jpg,*.png,*.avi,*.mov,*.mpg,*.mp4,*.3gp',
+    'local_include': '\.(jpg|png|avi|mov|mpg|mp4|3gp)$',
+    'local_include_dir': '',
     'local_exclude': '',
-    'remote_exclude': ''
+    'local_exclude_dir': '',
+    'flickr_include': '',
+    'flickr_include_dir': '',
+    'flickr_exclude': '',
+    'flickr_exclude_dir': ''
 }
 
 class Config(object):
