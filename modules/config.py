@@ -25,6 +25,11 @@ DEFAULT_FILES = {
     'flickr_exclude': '',
     'flickr_exclude_dir': ''
 }
+DEFAULT_OPTIONS = {
+    'mode': 'list',
+    'format': 'tree',
+    'direction': 'both'
+}
 
 class Config(object):
 
@@ -36,6 +41,7 @@ class Config(object):
         self.flickr = self._read_section(config, 'Flickr', DEFAULT_FLICKR)
         self.network = self._read_section(config, 'Network', DEFAULT_NETWORK)
         self.files = self._read_section(config, 'Files', DEFAULT_FILES)
+        self.options = self._read_section(config, 'Options', DEFAULT_OPTIONS)
 
     def _read_section(self, config, section, default):
         if not config.has_section(section):

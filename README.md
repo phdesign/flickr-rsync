@@ -12,6 +12,5 @@ pip install flickr_api --target ./libs
 ## TODO
 
 * How to handle nested directories (merge with separator)
-* Sort listings (use yeild instead of print?)
 * Modes: Tree / CSV
 * Include files in root and not in photosets

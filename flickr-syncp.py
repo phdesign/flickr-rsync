@@ -16,17 +16,18 @@ if __name__ == "__main__":
         config = Config()
         config.read()
 
-        storage = LocalStorage(config)
-        tree_walker = TreeWalker(storage)
-        print "Local"
-        tree_walker.walk()
-        # sys.exit()
+        if config.options['mode'] == 'list':
+            if config.options['direction'] == 'local' or config.options['direction'] == 'both':
+                storage = LocalStorage(config)
+                tree_walker = TreeWalker(storage)
+                print "\nLocal"
+                tree_walker.walk()
 
-        storage = FlickrStorage(config)
-        tree_walker = TreeWalker(storage)
-        print
-        print "Remote"
-        tree_walker.walk()
+            if config.options['direction'] == 'flickr' or config.options['direction'] == 'both':
+                storage = FlickrStorage(config)
+                tree_walker = TreeWalker(storage)
+                print "\nRemote"
+                tree_walker.walk()
     except urllib2.URLError:
         print "Network connection interrupted"
         sys.exit()
