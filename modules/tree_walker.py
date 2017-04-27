@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import operator
+from walker import Walker
 
 UNICODE_LEAF = u"├─── ".encode('utf-8')
 UNICODE_LAST_LEAF = u"└─── ".encode('utf-8')
 UNICODE_BRANCH = u"│   ".encode('utf-8')
 UNICODE_LAST_BRANCH = "    "
 
-class TreeWalker(object):
+class TreeWalker(Walker):
     
     def __init__(self, storage):
         self._storage = storage
@@ -17,32 +18,51 @@ class TreeWalker(object):
 
     def walk(self):
         folders = self._storage.list_folders()
-        self.print_folders(folders)
+        self._print_root_files(len(folders) > 0)
+        self._print_folders(folders)
         print "{} directories, {} files{}".format(self._folder_count, self._file_count,
                 " (excluding {} empty directories)".format(self._hidden_folder_count) if self._hidden_folder_count > 0 else "")
 
-    def print_folders(self, folders):
+    def _print_root_files(self, has_folders):
+        files = self._storage.list_files(None)
+        if len(files) == 0:
+            return;
+        self._file_count += len(files)
+        last = len(files) - 1
+        sorted(files, key=lambda x: x.name)
+        for i, x in enumerate(files):
+            print self._format_leaf(
+                "{} [{:.6}]".format(x.name.encode('utf-8'), x.checksum) if x.checksum else x.name.encode('utf-8'), 
+                i == last and not has_folders)
+        if has_folders:
+            print UNICODE_BRANCH
+
+    def _print_folders(self, folders):
         last = len(folders) - 1
         sorted(folders, key=lambda x: x.name)
         for i, x in enumerate(folders):
-            self.print_folder(x, i == last) 
+            self._print_folder(x, i == last) 
 
-    def print_folder(self, folder, is_last):
+    def _print_folder(self, folder, is_last):
         files = self._storage.list_files(folder)
         if len(files) == 0:
             self._hidden_folder_count += 1
             return
-        print self.format_leaf(folder.name.encode('utf-8'), is_last)
+        print self._format_leaf(folder.name.encode('utf-8'), is_last)
         self._folder_count += 1
         self._file_count += len(files)
         prefix = UNICODE_LAST_BRANCH if is_last else UNICODE_BRANCH
-        self.print_files(prefix, files)
+        self._print_files(prefix, files)
+        if not is_last:
+            print UNICODE_BRANCH
     
-    def print_files(self, prefix, files):
+    def _print_files(self, prefix, files):
         last = len(files) - 1
         sorted(files, key=lambda x: x.name)
         for i, x in enumerate(files):
-            print prefix + self.format_leaf("{} [{:.6}]".format(x.name.encode('utf-8'), x.checksum) if x.checksum else x.name.encode('utf-8'), i == last)
+            print prefix + self._format_leaf(
+                "{} [{:.6}]".format(x.name.encode('utf-8'), x.checksum) if x.checksum else x.name.encode('utf-8'), 
+                i == last)
 
-    def format_leaf(self, text, is_last):
+    def _format_leaf(self, text, is_last):
         return (UNICODE_LAST_LEAF if is_last else UNICODE_LEAF) + text

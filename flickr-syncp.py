@@ -10,24 +10,27 @@ from modules.config import Config
 from modules.flickr_storage import FlickrStorage
 from modules.local_storage import LocalStorage
 from modules.tree_walker import TreeWalker
+from modules.csv_walker import CsvWalker
 
 if __name__ == "__main__":
     try:
         config = Config()
         config.read()
 
-        if config.options['mode'] == 'list':
-            if config.options['direction'] == 'local' or config.options['direction'] == 'both':
-                storage = LocalStorage(config)
-                tree_walker = TreeWalker(storage)
-                print "\nLocal"
-                tree_walker.walk()
-
-            if config.options['direction'] == 'flickr' or config.options['direction'] == 'both':
+        if config.list_only:
+            if config.src.lower() == Config.PATH_FLICKR:
                 storage = FlickrStorage(config)
-                tree_walker = TreeWalker(storage)
-                print "\nRemote"
-                tree_walker.walk()
+            else:
+                storage = LocalStorage(config, config.src)
+            if config.list_format == Config.LIST_FORMAT_TREE:
+                walker = TreeWalker(storage)
+            elif config.list_format == Config.LIST_FORMAT_CSV:
+                walker = CsvWalker(storage)
+            else:
+                raise ValueError('Unrecognised value for --list-format: {}'.format(config.list_format))
+
+            walker.walk()
+
     except urllib2.URLError:
         print "Network connection interrupted"
         sys.exit()

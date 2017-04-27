@@ -17,16 +17,11 @@ TOKEN_FILENAME = '.flickrToken'
 class FlickrStorage(Storage):
 
     def __init__(self, config):
+        self.config = config
         self._is_authenticated = False
         self._user = None
         self._api_key = config.flickr['api_key']
         self._api_secret = config.flickr['api_secret']
-        self._retry = int(config.network['retry'])
-        self._throttling = float(config.network['throttling'])
-        self._include = config.files['flickr_include']
-        self._include_dir = config.files['flickr_include_dir']
-        self._exclude = config.files['flickr_exclude']
-        self._exclude_dir = config.files['flickr_exclude_dir']
 
     def list_folders(self):
         self._authenticate()
@@ -44,8 +39,8 @@ class FlickrStorage(Storage):
         self._photosets = {x.id: x for x in all_photosets}
         folders = [FolderInfo(id=x.id, name=x.title) for x in all_photosets]
         return [x for x in folders 
-            if (not self._include_dir or re.search(self._include_dir, x.name, flags=re.IGNORECASE)) and
-                (not self._exclude_dir or not re.search(self._exclude_dir, x.name, flags=re.IGNORECASE))]
+            if (not self.config.include_dir or re.search(self.config.include_dir, x.name, flags=re.IGNORECASE)) and
+                (not self.config.exclude_dir or not re.search(self.config.exclude_dir, x.name, flags=re.IGNORECASE))]
 
     def list_files(self, folder):
         self._authenticate()
@@ -63,8 +58,8 @@ class FlickrStorage(Storage):
 
         files = [self._get_file_info(x) for x in all_photos]
         return [x for x in files 
-            if (not self._include or re.search(self._include, x.name, flags=re.IGNORECASE)) and
-                (not self._exclude or not re.search(self._exclude, x.name, flags=re.IGNORECASE))]
+            if (not self.config.include or re.search(self.config.include, x.name, flags=re.IGNORECASE)) and
+                (not self.config.exclude or not re.search(self.config.exclude, x.name, flags=re.IGNORECASE))]
 
     def _get_file_info(self, photo):
         name = photo.title if photo.title else photo.id
@@ -102,9 +97,9 @@ class FlickrStorage(Storage):
 
     def _call_remote(self, fn, **kwargs):
         backoff = [0, 1, 3, 5, 10, 30, 60]
-        if self._throttling > 0:
-            time.sleep(self._throttling)
-        for i in range(self._retry):
+        if self.config.throttling > 0:
+            time.sleep(self.config.throttling)
+        for i in range(self.config.retry):
             if i > 0:
                 time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
             try:
