@@ -84,4 +84,6 @@ class Config(object):
             self.exclude = config.get(FILES_SECTION, 'exclude')
         if config.has_option(FILES_SECTION, 'exclude_dir'):
             self.exclude_dir = config.get(FILES_SECTION, 'exclude_dir')
+        if config.has_option(FILES_SECTION, 'root_files'):
+            self.root_files = config.getboolean(FILES_SECTION, 'root_files')
 

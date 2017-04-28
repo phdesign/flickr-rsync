@@ -10,7 +10,8 @@ UNICODE_LAST_BRANCH = "    "
 
 class TreeWalker(Walker):
     
-    def __init__(self, storage):
+    def __init__(self, config, storage):
+        self._config = config
         self._storage = storage
         self._file_count = 0
         self._hidden_folder_count = 0
@@ -18,7 +19,8 @@ class TreeWalker(Walker):
 
     def walk(self):
         folders = self._storage.list_folders()
-        self._print_root_files(len(folders) > 0)
+        if self._config.root_files:
+            self._print_root_files(len(folders) > 0)
         self._print_folders(folders)
         print "{} directories, {} files{}".format(self._folder_count, self._file_count,
                 " (excluding {} empty directories)".format(self._hidden_folder_count) if self._hidden_folder_count > 0 else "")

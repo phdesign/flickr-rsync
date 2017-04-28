@@ -3,13 +3,15 @@ from walker import Walker
 
 class CsvWalker(Walker):
     
-    def __init__(self, storage):
+    def __init__(self, config, storage):
+        self._config = config
         self._storage = storage
 
     def walk(self):
         folders = self._storage.list_folders()
         print "Folder, Filename, Checksum"
-        self._print_root_files()
+        if self._config.root_files:
+            self._print_root_files()
         self._print_folders(folders)
 
     def _print_root_files(self):

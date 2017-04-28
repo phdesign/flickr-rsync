@@ -37,6 +37,7 @@ python flickr-syncp.py --mode sync --src /Users/paul/Pictures/Uploadr/ --dest fl
         --include-dir       include only directories matching REGEX 
         --exclude           exclude any files matching REGEX, note this takes precedent over --include
         --exclude-dir       exclude any directories matching REGEX, note this takes precedent over --include-dir
+        --root-files        includes roots files (not in a directory or a photoset) in the list or copy
         --recursive         recurses into subdirectories and treats them as photosets, prefixing the name with the parent
                             folder name
     -n, --dry-run           in sync mode, don't actually copy anything, just simulate the process and output

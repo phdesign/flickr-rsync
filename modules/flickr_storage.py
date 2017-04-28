@@ -17,7 +17,7 @@ TOKEN_FILENAME = '.flickrToken'
 class FlickrStorage(Storage):
 
     def __init__(self, config):
-        self.config = config
+        self._config = config
         self._is_authenticated = False
         self._user = None
         self._api_key = config.flickr['api_key']
@@ -39,17 +39,20 @@ class FlickrStorage(Storage):
         self._photosets = {x.id: x for x in all_photosets}
         folders = [FolderInfo(id=x.id, name=x.title) for x in all_photosets]
         return [x for x in folders 
-            if (not self.config.include_dir or re.search(self.config.include_dir, x.name, flags=re.IGNORECASE)) and
-                (not self.config.exclude_dir or not re.search(self.config.exclude_dir, x.name, flags=re.IGNORECASE))]
+            if (not self._config.include_dir or re.search(self._config.include_dir, x.name, flags=re.IGNORECASE)) and
+                (not self._config.exclude_dir or not re.search(self._config.exclude_dir, x.name, flags=re.IGNORECASE))]
 
     def list_files(self, folder):
         self._authenticate()
         all_photos = []
         page = 1
         total_pages = 0
-        photoset = self._photosets[folder.id]
+        if not folder == None:
+            operation = self._photosets[folder.id].getPhotos
+        else:
+            operation = self._user.getNotInSetPhotos
         for i in range(0, MAX_PAGES):
-            paged_photos = self._call_remote(photoset.getPhotos, extras='original_format,tags')
+            paged_photos = self._call_remote(operation, extras='original_format,tags')
             all_photos += paged_photos
             total_pages = paged_photos.info.pages
             page = paged_photos.info.page
@@ -58,8 +61,8 @@ class FlickrStorage(Storage):
 
         files = [self._get_file_info(x) for x in all_photos]
         return [x for x in files 
-            if (not self.config.include or re.search(self.config.include, x.name, flags=re.IGNORECASE)) and
-                (not self.config.exclude or not re.search(self.config.exclude, x.name, flags=re.IGNORECASE))]
+            if (not self._config.include or re.search(self._config.include, x.name, flags=re.IGNORECASE)) and
+                (not self._config.exclude or not re.search(self._config.exclude, x.name, flags=re.IGNORECASE))]
 
     def _get_file_info(self, photo):
         name = photo.title if photo.title else photo.id
@@ -97,9 +100,9 @@ class FlickrStorage(Storage):
 
     def _call_remote(self, fn, **kwargs):
         backoff = [0, 1, 3, 5, 10, 30, 60]
-        if self.config.throttling > 0:
-            time.sleep(self.config.throttling)
-        for i in range(self.config.retry):
+        if self._config.throttling > 0:
+            time.sleep(self._config.throttling)
+        for i in range(self._config.retry):
             if i > 0:
                 time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
             try:
