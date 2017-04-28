@@ -20,8 +20,6 @@ class FlickrStorage(Storage):
         self._config = config
         self._is_authenticated = False
         self._user = None
-        self._api_key = config.flickr['api_key']
-        self._api_secret = config.flickr['api_secret']
 
     def list_folders(self):
         self._authenticate()
@@ -78,7 +76,7 @@ class FlickrStorage(Storage):
         if self._is_authenticated:
             return
 
-        flickr_api.set_keys(api_key = self._api_key, api_secret = self._api_secret)
+        flickr_api.set_keys(api_key = self._config.api_key, api_secret = self._config.api_secret)
 
         token_path = os.path.join(os.path.split(os.path.abspath(__main__.__file__))[0], TOKEN_FILENAME)
         if os.path.isfile(token_path):
