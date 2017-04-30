@@ -10,8 +10,8 @@ class Sync(object):
         self._dest = dest
 
     def run(self):
-        self._src_folders = sorted(self._src.list_folders(), key=lambda x: x.name)
-        self._dest_folders = sorted(self._dest.list_folders(), key=lambda x: x.name)
+        self._src_folders = self._src.list_folders()
+        self._dest_folders = self._dest.list_folders()
         self._copy_shallow()
 
     def _copy_shallow(self):
@@ -21,8 +21,6 @@ class Sync(object):
                 if src_folder.name == dest_folder.name:
                     exists = True
                     break
-                if src_folder.name > dest_folder.name:
-                    break
             if not exists:
                 self._copy_folder(src_folder)
 
@@ -31,3 +29,6 @@ class Sync(object):
 
     def _copy_folder(self, folder):
         print "Copying folder " + folder.name
+        files = self._src.list_files_in_folder(folder)
+        for file_to_copy in files:
+            self._src.copy_file(file_to_copy, folder.name, self._dest)

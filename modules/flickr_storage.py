@@ -40,7 +40,7 @@ class FlickrStorage(Storage):
             if (not self._config.include_dir or re.search(self._config.include_dir, x.name, flags=re.IGNORECASE)) and
                 (not self._config.exclude_dir or not re.search(self._config.exclude_dir, x.name, flags=re.IGNORECASE))]
 
-    def list_files(self, folder):
+    def list_files_in_folder(self, folder):
         self._authenticate()
         all_photos = []
         page = 1
@@ -61,6 +61,14 @@ class FlickrStorage(Storage):
         return [x for x in files 
             if (not self._config.include or re.search(self._config.include, x.name, flags=re.IGNORECASE)) and
                 (not self._config.exclude or not re.search(self._config.exclude, x.name, flags=re.IGNORECASE))]
+
+    def copy_file(self, file_info, folder_name, dest_storage):
+        # Download
+        pass
+
+    def receive_file(self, file_info, folder_name):
+        # Upload
+        pass
 
     def _get_file_info(self, photo):
         name = photo.title if photo.title else photo.id

@@ -48,4 +48,8 @@ python flickr-syncp.py --mode sync --src /Users/paul/Pictures/Uploadr/ --dest fl
 
 ## TODO
 
-* How to handle nested directories (merge with separator)
+* Handle nested directories (merge with separator)
+* --add-checksum-ta*g (Add checksumto all files)
+* --list-duplicates
+* Copy local files / add to multiple albums if checksum equal. (How to deal with same file different names)
+* Multi-threading

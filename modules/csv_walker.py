@@ -15,7 +15,7 @@ class CsvWalker(Walker):
         self._print_folders(folders)
 
     def _print_root_files(self):
-        files = self._storage.list_files(None)
+        files = self._storage.list_files_in_folder(None)
         if len(files) == 0:
             return;
         self._print_files("", files)
@@ -27,7 +27,7 @@ class CsvWalker(Walker):
             self._print_folder(x, i == last) 
 
     def _print_folder(self, folder, is_last):
-        files = self._storage.list_files(folder)
+        files = self._storage.list_files_in_folder(folder)
         if len(files) == 0:
             return
         self._print_files(folder.name.encode('utf-8'), files)
