@@ -18,7 +18,7 @@ class TreeWalker(Walker):
         self._folder_count = 0
 
     def walk(self):
-        folders = self._storage.list_folders()
+        folders = sorted(self._storage.list_folders(), key=lambda x: x.name)
         if self._config.root_files:
             self._print_root_files(len(folders) > 0)
         self._print_folders(folders)
@@ -26,12 +26,11 @@ class TreeWalker(Walker):
                 " (excluding {} empty directories)".format(self._hidden_folder_count) if self._hidden_folder_count > 0 else "")
 
     def _print_root_files(self, has_folders):
-        files = self._storage.list_files_in_folder(None)
+        files = sorted(self._storage.list_files_in_folder(None), key=lambda x: x.name)
         if len(files) == 0:
             return;
         self._file_count += len(files)
         last = len(files) - 1
-        sorted(files, key=lambda x: x.name)
         for i, x in enumerate(files):
             print self._format_leaf(
                 "{} [{:.6}]".format(x.name.encode('utf-8'), x.checksum) if x.checksum else x.name.encode('utf-8'), 
@@ -41,12 +40,11 @@ class TreeWalker(Walker):
 
     def _print_folders(self, folders):
         last = len(folders) - 1
-        sorted(folders, key=lambda x: x.name)
         for i, x in enumerate(folders):
             self._print_folder(x, i == last) 
 
     def _print_folder(self, folder, is_last):
-        files = self._storage.list_files_in_folder(folder)
+        files = sorted(self._storage.list_files_in_folder(folder), key=lambda x: x.name)
         if len(files) == 0:
             self._hidden_folder_count += 1
             return
@@ -60,7 +58,6 @@ class TreeWalker(Walker):
     
     def _print_files(self, prefix, files):
         last = len(files) - 1
-        sorted(files, key=lambda x: x.name)
         for i, x in enumerate(files):
             print prefix + self._format_leaf(
                 "{} [{:.6}]".format(x.name.encode('utf-8'), x.checksum) if x.checksum else x.name.encode('utf-8'), 
