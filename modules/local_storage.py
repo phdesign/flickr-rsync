@@ -52,12 +52,6 @@ class LocalStorage(Storage):
                 os.path.isfile(path)
         ]
 
-    def copy_file(self, file_info, folder_name, dest_storage):
-        dest_storage.receive_file(file_info, folder_name)
-        pass
-
-    def receive_file(self, file_info, folder_name):
+    def copy_file(self, file_info, dest):
         src = file_info.full_path
-        dest = os.path.join(self.path, folder_name, file_info.name)
         copyfilep(src, dest)
-        pass

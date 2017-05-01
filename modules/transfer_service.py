@@ -5,6 +5,7 @@ from local_storage import LocalStorage
 class TransferService(object):
 
     def copy_file(file_info, src_storage, folder_name, dest_storage):
+
         if isinstance(dest_storage, LocalStorage):
             dest_path = os.path.join(dest_storage.path, folder_name, file_info.name)
         elif isinstance(dest_storage, FlickrStorage):

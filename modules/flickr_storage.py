@@ -64,12 +64,11 @@ class FlickrStorage(Storage):
             if (not self._config.include or re.search(self._config.include, x.name, flags=re.IGNORECASE)) and
                 (not self._config.exclude or not re.search(self._config.exclude, x.name, flags=re.IGNORECASE))]
 
-    def copy_file(self, file_info, folder_name, dest_storage):
+    def download(self, file_info, dest):
         photo = self._photos[file_info.id]
-        photo.save(filename, size_label = 'Original')
-        pass
+        photo.save(dest, size_label = 'Original')
 
-    def receive_file(self, file_info, folder_name):
+    def upload(self, src, folder_name, file_name):
         # Upload
         pass
 
