@@ -47,5 +47,17 @@ class SyncTest(unittest.TestCase):
         mock.assert_any_call(folder_two)
         self.assertEqual(mock.call_count, 2)
 
+    def test_not_should_call_copy_folder_given_all_exist_already(self):
+        folder_one = FolderInfo(id=1, name='A')
+        folder_two = FolderInfo(id=2, name='B')
+        self.src_storage.list_folders.return_value = [folder_one, folder_two]
+        self.dest_storage.list_folders.return_value = [folder_two, folder_one]
+
+        mock = MagicMock()
+        self.sync._copy_folder = mock
+        self.sync.run()
+
+        mock.assert_not_called()
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

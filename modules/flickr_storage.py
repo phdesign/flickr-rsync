@@ -20,6 +20,8 @@ class FlickrStorage(Storage):
         self._config = config
         self._is_authenticated = False
         self._user = None
+        self._photosets = {}
+        self._photos = {}
 
     def list_folders(self):
         self._authenticate()
@@ -63,7 +65,8 @@ class FlickrStorage(Storage):
                 (not self._config.exclude or not re.search(self._config.exclude, x.name, flags=re.IGNORECASE))]
 
     def copy_file(self, file_info, folder_name, dest_storage):
-        # Download
+        photo = self._photos[file_info.id]
+        photo.save(filename, size_label = 'Original')
         pass
 
     def receive_file(self, file_info, folder_name):
