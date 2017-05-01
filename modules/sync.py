@@ -11,6 +11,8 @@ class Sync(object):
         self._file_count = 0
 
     def run(self):
+        if self._config.dry_run:
+            print "dry run enabled, simulating operation only...\n"
         start = time.time()
         self._src_folders = self._src.list_folders()
         self._dest_folders = self._dest.list_folders()

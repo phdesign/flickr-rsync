@@ -95,6 +95,8 @@ class Config(object):
             items['list_only'] = self._strtobool(items['list_only'])
         if items.get('list_format'):
             items['list_format'] = items['list_format'].lower()
+        if items.get('dry_run'):
+            items['dry_run'] = self._strtobool(items['dry_run'])
         options.update(items)
 
     def _read_network_section(self, config, options):
