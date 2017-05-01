@@ -4,7 +4,7 @@ import glob
 import itertools
 import hashlib
 import shutil
-from storage import Storage
+from storage import Storage, RemoteStorage
 from file_info import FileInfo
 from folder_info import FolderInfo
 
@@ -52,6 +52,10 @@ class LocalStorage(Storage):
                 os.path.isfile(path)
         ]
 
-    def copy_file(self, file_info, dest):
+    def copy_file(self, file_info, folder_name, dest_storage):
         src = file_info.full_path
-        copyfilep(src, dest)
+        if isinstance(dest_storage, RemoteStorage):
+            dest_storage.upload(src, folder_name, file_info.name)
+        else:
+            dest = os.path.join(dest_storage.path, folder_name, file_info.name)
+            copyfilep(src, dest)

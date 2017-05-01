@@ -5,7 +5,7 @@ import webbrowser
 import time
 import datetime
 import urllib2
-from storage import Storage
+from storage import RemoteStorage
 import flickr_api
 from flickr_api.api import flickr
 from file_info import FileInfo
@@ -14,7 +14,7 @@ from folder_info import FolderInfo
 MAX_PAGES = 100
 TOKEN_FILENAME = '.flickrToken'
 
-class FlickrStorage(Storage):
+class FlickrStorage(RemoteStorage):
 
     def __init__(self, config):
         self._config = config
@@ -69,8 +69,17 @@ class FlickrStorage(Storage):
         photo.save(dest, size_label = 'Original')
 
     def upload(self, src, folder_name, file_name):
-        # Upload
-        pass
+        flickr_api.upload(photo_file = src, title = file_name)
+
+    def copy_file(self, file_info, folder_name, dest_storage):
+        if isinstance(dest_storage, RemoteStorage):
+            temp_file = NamedTemporaryFile()
+            download(file_info, temp_file.name)
+            dest_storage.upload(temp_file.name, folder_name, file_info.name)
+            temp_file.close()
+        else:
+            dest = os.path.join(dest_storage.path, folder_name, file_info.name)
+            download(file_info, dest)
 
     def _get_file_info(self, photo):
         name = photo.title if photo.title else photo.id
