@@ -59,12 +59,20 @@ class FlickrStorage(RemoteStorage):
             if page >= total_pages:
                 break
 
+        self._photos.update({x.id: x for x in all_photos})
         files = [self._get_file_info(x) for x in all_photos]
         return [x for x in files 
             if (not self._config.include or re.search(self._config.include, x.name, flags=re.IGNORECASE)) and
                 (not self._config.exclude or not re.search(self._config.exclude, x.name, flags=re.IGNORECASE))]
 
     def download(self, file_info, dest):
+        if not os.path.exists(os.path.dirname(dest)):
+            try:
+                os.makedirs(os.path.dirname(dest))
+            except OSError as exc: # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+            
         photo = self._photos[file_info.id]
         photo.save(dest, size_label = 'Original')
 
@@ -74,12 +82,12 @@ class FlickrStorage(RemoteStorage):
     def copy_file(self, file_info, folder_name, dest_storage):
         if isinstance(dest_storage, RemoteStorage):
             temp_file = NamedTemporaryFile()
-            download(file_info, temp_file.name)
+            self.download(file_info, temp_file.name)
             dest_storage.upload(temp_file.name, folder_name, file_info.name)
             temp_file.close()
         else:
             dest = os.path.join(dest_storage.path, folder_name, file_info.name)
-            download(file_info, dest)
+            self.download(file_info, dest)
 
     def _get_file_info(self, photo):
         name = photo.title if photo.title else photo.id
