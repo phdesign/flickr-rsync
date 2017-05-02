@@ -7,7 +7,7 @@ from modules.sync import Sync
 from modules.file_info import FileInfo
 from modules.folder_info import FolderInfo
 
-class SyncTest(unittest.TestCase):
+class SyncTestBase(unittest.TestCase):
 
     def setUp(self):
         self.config = MagicMock()
@@ -29,8 +29,24 @@ class SyncTest(unittest.TestCase):
         storage.list_folders.return_value = [x['folder'] for x in folders]
         storage.list_files.side_effect = lambda folder: next(x['files'] for x in folders if x['folder'] == folder)
 
+class SyncTest(SyncTestBase):
+
+    def test_should_not_copy_anything_given_dry_run_enabled(self):
+        self.config.dry_run = True
+        self._setup_storage(self.src_storage, [
+            { 'folder': self.folder_one, 'files': [self.file_one] },
+            { 'folder': self.folder_two, 'files': [self.file_one, self.file_two] }
+        ])
+        self._setup_storage(self.dest_storage, [
+            { 'folder': self.folder_two, 'files': [self.file_one] }
+        ])
+
+        self.sync.run()
+
+        self.mock.assert_not_called()
+
 # @unittest.skip("")
-class SyncCopyTest(SyncTest):
+class SyncCopyTest(SyncTestBase):
 
     def setUp(self):
         super(SyncCopyTest, self).setUp()
@@ -82,7 +98,7 @@ class SyncCopyTest(SyncTest):
 
         self.mock.assert_not_called()
 
-class SyncMergeTest(SyncTest):
+class SyncMergeTest(SyncTestBase):
 
     def setUp(self):
         super(SyncMergeTest, self).setUp()
