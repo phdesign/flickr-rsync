@@ -42,7 +42,7 @@ class LocalStorage(Storage):
                 os.path.isdir(path)
         ]
 
-    def list_files_in_folder(self, folder):
+    def list_files(self, folder):
         folder_abs = os.path.join(self.path, folder.name) if folder else self.path
         return [
             FileInfo(id=i, name=name, full_path=path, checksum=self.md5_checksum(path))

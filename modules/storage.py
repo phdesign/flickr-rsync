@@ -7,7 +7,7 @@ class Storage(object):
         pass
 
     @abstractmethod
-    def list_files_in_folder(self, folder):
+    def list_files(self, folder):
         pass
 
     @abstractmethod

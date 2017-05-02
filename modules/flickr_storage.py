@@ -42,7 +42,7 @@ class FlickrStorage(RemoteStorage):
             if (not self._config.include_dir or re.search(self._config.include_dir, x.name, flags=re.IGNORECASE)) and
                 (not self._config.exclude_dir or not re.search(self._config.exclude_dir, x.name, flags=re.IGNORECASE))]
 
-    def list_files_in_folder(self, folder):
+    def list_files(self, folder):
         self._authenticate()
         all_photos = []
         page = 1
