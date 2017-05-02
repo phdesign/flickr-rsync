@@ -18,39 +18,65 @@ class SyncTest(unittest.TestCase):
         self.folder_two = FolderInfo(id=2, name='B')
         self.folder_three = FolderInfo(id=3, name='C')
         self.folder_four = FolderInfo(id=4, name='D')
-        self.sync = Sync(self.config, self.src_storage, self.dest_storage)
+        self.file_one = FileInfo(id=1, name='A')
+        self.file_two = FileInfo(id=1, name='B')
 
+        self.sync = Sync(self.config, self.src_storage, self.dest_storage)
+        self.mock = MagicMock()
+        self.src_storage.copy_file = self.mock
+
+    def _setup_storage(self, storage, folders):
+        storage.list_folders.return_value = [x['folder'] for x in folders]
+        storage.list_files.side_effect = lambda folder: next(x['files'] for x in folders if x['folder'] == folder)
+
+# @unittest.skip("")
 class SyncCopyTest(SyncTest):
 
     def setUp(self):
         super(SyncCopyTest, self).setUp()
-        self.mock = MagicMock()
-        self.sync._copy_folder = self.mock
 
     def test_should_copy_folder_for_each_missing_folder_in_src(self):
-        self.src_storage.list_folders.return_value = [self.folder_one, self.folder_two, self.folder_three]
-        self.dest_storage.list_folders.return_value = []
+        self._setup_storage(self.src_storage, [
+            { 'folder': self.folder_one, 'files': [self.file_one] },
+            { 'folder': self.folder_two, 'files': [self.file_one] },
+            { 'folder': self.folder_three, 'files': [self.file_one] },
+        ])
+        self._setup_storage(self.dest_storage, [])
 
         self.sync.run()
 
-        self.mock.assert_any_call(self.folder_one)
-        self.mock.assert_any_call(self.folder_two)
-        self.mock.assert_any_call(self.folder_three)
+        self.mock.assert_any_call(self.file_one, self.folder_one.name, self.dest_storage)
+        self.mock.assert_any_call(self.file_one, self.folder_two.name, self.dest_storage)
+        self.mock.assert_any_call(self.file_one, self.folder_three.name, self.dest_storage)
         self.assertEqual(self.mock.call_count, 3)
 
     def test_should_copy_folder_for_each_missing_folder_given_some_exist_already(self):
-        self.src_storage.list_folders.return_value = [self.folder_one, self.folder_two, self.folder_three, self.folder_four]
-        self.dest_storage.list_folders.return_value = [self.folder_four, self.folder_three]
+        self._setup_storage(self.src_storage, [
+            { 'folder': self.folder_one, 'files': [self.file_one] },
+            { 'folder': self.folder_two, 'files': [self.file_one] },
+            { 'folder': self.folder_three, 'files': [self.file_one] },
+            { 'folder': self.folder_four, 'files': [self.file_one] },
+        ])
+        self._setup_storage(self.dest_storage, [
+            { 'folder': self.folder_four, 'files': [self.file_one] },
+            { 'folder': self.folder_three, 'files': [self.file_one] }
+        ])
 
         self.sync.run()
 
-        self.mock.assert_any_call(self.folder_one)
-        self.mock.assert_any_call(self.folder_two)
+        self.mock.assert_any_call(self.file_one, self.folder_one.name, self.dest_storage)
+        self.mock.assert_any_call(self.file_one, self.folder_two.name, self.dest_storage)
         self.assertEqual(self.mock.call_count, 2)
 
     def test_should_not_copy_folder_given_all_exist_already(self):
-        self.src_storage.list_folders.return_value = [self.folder_one, self.folder_two]
-        self.dest_storage.list_folders.return_value = [self.folder_two, self.folder_one]
+        self._setup_storage(self.src_storage, [
+            { 'folder': self.folder_one, 'files': [self.file_one] },
+            { 'folder': self.folder_two, 'files': [self.file_one] }
+        ])
+        self._setup_storage(self.dest_storage, [
+            { 'folder': self.folder_two, 'files': [self.file_one] },
+            { 'folder': self.folder_one, 'files': [self.file_one] }
+        ])
 
         self.sync.run()
 
@@ -60,16 +86,16 @@ class SyncMergeTest(SyncTest):
 
     def setUp(self):
         super(SyncMergeTest, self).setUp()
-        self.file_one = FileInfo(id=1, name='A')
-        self.file_two = FileInfo(id=1, name='B')
-        self.mock = MagicMock()
-        self.src_storage.copy_file = self.mock
 
     def test_should_copy_missing_files_in_existing_folder(self):
-        self.src_storage.list_folders.return_value = [self.folder_one]
-        self.dest_storage.list_folders.return_value = [self.folder_one]
-        self.src_storage.list_files.return_value = [self.file_one, self.file_two]
-        self.dest_storage.list_files.return_value = []
+        self._setup_storage(self.src_storage, [{
+            'folder': self.folder_one,
+            'files': [self.file_one, self.file_two]
+        }])
+        self._setup_storage(self.dest_storage, [{
+            'folder': self.folder_one,
+            'files': []
+        }])
 
         self.sync.run()
         
@@ -78,10 +104,14 @@ class SyncMergeTest(SyncTest):
         self.assertEqual(self.mock.call_count, 2)
 
     def test_should_copy_missing_files_from_all_folders(self):
-        self.src_storage.list_folders.return_value = [self.folder_one, self.folder_two]
-        self.dest_storage.list_folders.return_value = [self.folder_one, self.folder_two]
-        self.src_storage.list_files.side_effect = lambda x: [self.file_one] if x == self.folder_one else [self.file_two]
-        self.dest_storage.list_files.return_value = []
+        self._setup_storage(self.src_storage, [
+            { 'folder': self.folder_one, 'files': [self.file_one] },
+            { 'folder': self.folder_two, 'files': [self.file_two] }
+        ])
+        self._setup_storage(self.dest_storage, [
+            { 'folder': self.folder_one, 'files': [] },
+            { 'folder': self.folder_two, 'files': [] }
+        ])
 
         self.sync.run()
         
@@ -90,10 +120,14 @@ class SyncMergeTest(SyncTest):
         self.assertEqual(self.mock.call_count, 2)
 
     def test_should_copy_missing_files_in_existing_folder_given_files_exist(self):
-        self.src_storage.list_folders.return_value = [self.folder_one]
-        self.dest_storage.list_folders.return_value = [self.folder_one]
-        self.src_storage.list_files.return_value = [self.file_one, self.file_two]
-        self.dest_storage.list_files.return_value = [self.file_two]
+        self._setup_storage(self.src_storage, [{
+            'folder': self.folder_one,
+            'files': [self.file_one, self.file_two]
+        }])
+        self._setup_storage(self.dest_storage, [{
+            'folder': self.folder_one,
+            'files': [self.file_two]
+        }])
 
         self.sync.run()
         
@@ -101,10 +135,14 @@ class SyncMergeTest(SyncTest):
         self.assertEqual(self.mock.call_count, 1)
 
     def test_should_not_copy_files_given_all_files_exist(self):
-        self.src_storage.list_folders.return_value = [self.folder_one]
-        self.dest_storage.list_folders.return_value = [self.folder_one]
-        self.src_storage.list_files.return_value = [self.file_one]
-        self.dest_storage.list_files.return_value = [self.file_one, self.file_two]
+        self._setup_storage(self.src_storage, [{
+            'folder': self.folder_one,
+            'files': [self.file_one]
+        }])
+        self._setup_storage(self.dest_storage, [{
+            'folder': self.folder_one,
+            'files': [self.file_one, self.file_two]
+        }])
 
         self.sync.run()
         
