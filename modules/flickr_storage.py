@@ -66,6 +66,7 @@ class FlickrStorage(RemoteStorage):
                 (not self._config.exclude or not re.search(self._config.exclude, x.name, flags=re.IGNORECASE))]
 
     def download(self, file_info, dest):
+        # TODO: Make DRY
         if not os.path.exists(os.path.dirname(dest)):
             try:
                 os.makedirs(os.path.dirname(dest))
@@ -77,6 +78,7 @@ class FlickrStorage(RemoteStorage):
         photo.save(dest, size_label = 'Original')
 
     def upload(self, src, folder_name, file_name):
+        # TODO: Send tags incl. checksum
         flickr_api.upload(photo_file = src, title = file_name)
 
     def copy_file(self, file_info, folder_name, dest_storage):

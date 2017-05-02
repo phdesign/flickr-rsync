@@ -53,3 +53,4 @@ python flickr-syncp.py --mode sync --src /Users/paul/Pictures/Uploadr/ --dest fl
 * --list-duplicates
 * Copy local files / add to multiple albums if checksum equal. (How to deal with same file different names)
 * Multi-threading
+* Fix unicode characters on Windows

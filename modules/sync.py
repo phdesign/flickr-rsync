@@ -35,7 +35,7 @@ class Sync(object):
         for src_folder in src_folders:
             exists = False
             for dest_folder in dest_folders:
-                if src_folder.name == dest_folder.name:
+                if src_folder.name.lower() == dest_folder.name.lower():
                     plan['merge'].append([src_folder, dest_folder])
                     exists = True
                     break
@@ -57,7 +57,7 @@ class Sync(object):
         for src_file in src_files:
             exists = False
             for dest_file in dest_files:
-                if src_file.name == dest_file.name:
+                if src_file.name.lower() == dest_file.name.lower():
                     exists = True
                     break
             if not exists:
