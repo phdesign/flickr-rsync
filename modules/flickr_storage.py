@@ -86,7 +86,8 @@ class FlickrStorage(RemoteStorage):
             is_public=self._config.is_public,
             is_friend=self._config.is_friend,
             is_family=self._config.is_family,
-            async=1)
+            async=0)
+        # TODO: use async=0
         # We should put the album assignment on a separate thread. flickr.photos.upload.checkTickets
         # This will mean we need to wait for async operations to finish before completing process.
         # Maybe don't write file name to output until operation is complete
@@ -95,7 +96,8 @@ class FlickrStorage(RemoteStorage):
             photoset = self._get_folder_by_name(folder_name)
             if not photoset:
                 photoset = self._call_remote(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
-            self._call_remote(photoset.addPhoto, photo=photo)
+            else:
+                self._call_remote(photoset.addPhoto, photo=photo)
 
     def copy_file(self, file_info, folder_name, dest_storage):
         if isinstance(dest_storage, RemoteStorage):

@@ -1,6 +1,6 @@
 # flickr-syncp
 
-A python script to manage synchronising a local directory of photos to flickr
+A python script to manage synchronising a local directory of photos with flickr based on an rsync interaction pattern
 
 ## Installation
 
