@@ -57,3 +57,4 @@ python flickr-syncp.py flickr --exclude-dir '.*' --root-files --list-only
 * Copy local files / add to multiple albums if checksum equal. (How to deal with same file different names)
 * Multi-threading
 * Fix unicode characters on Windows
+* Use generators properly so that we process each file as it's receieved rather than wait to list all files then process them

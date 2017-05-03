@@ -29,20 +29,16 @@ class FlickrStorage(RemoteStorage):
     def list_folders(self):
         self._authenticate()
 
-        folders = []
         walker = self._call_remote(flickr_api.objects.Walker, self._user.getPhotosets)
         for photoset in walker:
             self._photosets[photoset.id] = photoset
             folder = FolderInfo(id=photoset.id, name=photoset.title)
             if self._should_include(folder.name, self._config.include_dir, self._config.exclude_dir):
-                folders.append(folder)
-
-        return folders
+                yield folder
 
     def list_files(self, folder):
         self._authenticate()
 
-        files = []
         if not folder == None:
             operation = self._photosets[folder.id].getPhotos
         else:
@@ -52,9 +48,7 @@ class FlickrStorage(RemoteStorage):
             self._photos[photo.id] = photo
             file_info = self._get_file_info(photo)
             if self._should_include(file_info.name, self._config.include, self._config.exclude):
-                files.append(file_info)
-
-        return files
+                yield file_info
 
     def download(self, file_info, dest):
         mkdirp(dest)
