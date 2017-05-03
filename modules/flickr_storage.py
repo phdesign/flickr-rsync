@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import re
 import __main__
@@ -12,7 +13,6 @@ from file_info import FileInfo
 from folder_info import FolderInfo
 from local_storage import mkdirp
 
-MAX_PAGES = 1000
 TOKEN_FILENAME = '.flickrToken'
 CHECKSUM_PREFIX = 'checksum:md5'
 OAUTH_PERMISSIONS = 'write'
@@ -28,46 +28,33 @@ class FlickrStorage(RemoteStorage):
 
     def list_folders(self):
         self._authenticate()
-        all_photosets = []
-        page = 1
-        total_pages = 0
-        for i in range(0, MAX_PAGES):
-            paged_photosets = self._call_remote(self._user.getPhotosets, page=page)
-            all_photosets += paged_photosets
-            total_pages = paged_photosets.info.pages
-            page = paged_photosets.info.page
-            if page >= total_pages:
-                break
 
-        self._photosets = {x.id: x for x in all_photosets}
-        folders = [FolderInfo(id=x.id, name=x.title) for x in all_photosets]
-        return [x for x in folders 
-            if (not self._config.include_dir or re.search(self._config.include_dir, x.name, flags=re.IGNORECASE)) and
-                (not self._config.exclude_dir or not re.search(self._config.exclude_dir, x.name, flags=re.IGNORECASE))]
+        folders = []
+        walker = self._call_remote(flickr_api.objects.Walker, self._user.getPhotosets)
+        for photoset in walker:
+            self._photosets[photoset.id] = photoset
+            folder = FolderInfo(id=photoset.id, name=photoset.title)
+            if self._should_include(folder.name, self._config.include_dir, self._config.exclude_dir):
+                folders.append(folder)
+
+        return folders
 
     def list_files(self, folder):
         self._authenticate()
-        all_photos = []
-        page = 1
-        total_pages = 0
+
+        files = []
         if not folder == None:
             operation = self._photosets[folder.id].getPhotos
         else:
             operation = self._user.getNotInSetPhotos
-        for i in range(0, MAX_PAGES):
-            paged_photos = self._call_remote(operation, extras='original_format,tags')
-            all_photos += paged_photos
-            total_pages = paged_photos.info.pages
-            page = paged_photos.info.page
-            if page >= total_pages:
-                break
+        walker = self._call_remote(flickr_api.objects.Walker, operation, extras='original_format,tags')
+        for photo in walker:
+            self._photos[photo.id] = photo
+            file_info = self._get_file_info(photo)
+            if self._should_include(file_info.name, self._config.include, self._config.exclude):
+                files.append(file_info)
 
-        self._photos.update({x.id: x for x in all_photos})
-        print "{!r}".format(all_photos)
-        files = [self._get_file_info(x) for x in all_photos]
-        return [x for x in files 
-            if (not self._config.include or re.search(self._config.include, x.name, flags=re.IGNORECASE)) and
-                (not self._config.exclude or not re.search(self._config.exclude, x.name, flags=re.IGNORECASE))]
+        return files
 
     def download(self, file_info, dest):
         mkdirp(dest)
@@ -122,6 +109,10 @@ class FlickrStorage(RemoteStorage):
             checksum = next((parts[1] for parts in (tag.split('=') for tag in tags) if parts[0] == CHECKSUM_PREFIX), None)
         return FileInfo(id=photo.id, name=name, checksum=checksum)
 
+    def _should_include(self, name, include_pattern, exclude_pattern):
+        return ((not include_pattern or re.search(include_pattern, name, flags=re.IGNORECASE)) and
+            (not exclude_pattern or not re.search(exclude_pattern, name, flags=re.IGNORECASE)))
+
     def _authenticate(self):
         if self._is_authenticated:
             return
@@ -137,7 +128,7 @@ class FlickrStorage(RemoteStorage):
             permissions_requested = OAUTH_PERMISSIONS
             url = auth_handler.get_authorization_url(permissions_requested)
             webbrowser.open(url)
-            print "Please enter the OAuth verifier tag once logged in:"
+            print("Please enter the OAuth verifier tag once logged in:")
             verifier_code = raw_input("> ")
             auth_handler.set_verifier(verifier_code)
             auth_handler.save(token_path)

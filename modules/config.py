@@ -18,6 +18,7 @@ DEFAULTS = {
     'include_dir': '',
     'exclude': '',
     'exclude_dir': '',
+    'root_files': False,
     'dry_run': False,
     'throttling': 0.5,
     'retry': 7,

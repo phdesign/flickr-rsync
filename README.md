@@ -25,6 +25,9 @@ python flickr-syncp.py --mode list --src flickr --include .* --include-dir .* --
 
 # Copying files
 python flickr-syncp.py --mode sync --src /Users/paul/Pictures/Uploadr/ --dest flickr
+
+# To list just root files
+python flickr-syncp.py flickr --exclude-dir '.*' --root-files --list-only
 ```
 
 ### Options

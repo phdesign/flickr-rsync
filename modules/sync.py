@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import operator
 import time
@@ -12,16 +13,16 @@ class Sync(object):
 
     def run(self):
         if self._config.dry_run:
-            print "dry run enabled, simulating operation only..."
-        print "building folder list...\n"
+            print("dry run enabled, no files will be copied")
+        print("building folder list...")
         start = time.time()
 
         plan = self._make_plan()
         for src_folder in plan['copy']:
-            print src_folder.name + os.sep
+            print(src_folder.name + os.sep)
             self._copy_folder(src_folder)
         for (src_folder, dest_folder) in plan['merge']:
-            print src_folder.name + os.sep
+            print(src_folder.name + os.sep)
             self._merge_folders(src_folder, dest_folder)
 
         self._print_summary(time.time() - start)
@@ -32,6 +33,7 @@ class Sync(object):
             'merge': []
         }
         src_folders = self._src.list_folders()
+        print("{} folders to consider".format(len(src_folders)))
         dest_folders = self._dest.list_folders()
         for src_folder in src_folders:
             dest_folder = next((x for x in dest_folders if x.name.lower() == src_folder.name.lower()), None)
@@ -44,7 +46,7 @@ class Sync(object):
     def _copy_folder(self, folder):
         src_files = self._src.list_files(folder)
         for src_file in src_files:
-            print os.path.join(folder.name, src_file.name)
+            print(os.path.join(folder.name, src_file.name))
             self._file_count += 1
             if not self._config.dry_run:
                 self._src.copy_file(src_file, folder.name, self._dest)
@@ -55,11 +57,11 @@ class Sync(object):
         for src_file in src_files:
             file_exists = next((True for x in dest_files if x.name.lower() == src_file.name.lower()), False)
             if not file_exists:
-                print os.path.join(src_folder.name, src_file.name)
+                print(os.path.join(src_folder.name, src_file.name))
                 self._file_count += 1
                 if not self._config.dry_run:
                     self._src.copy_file(src_file, src_folder.name, self._dest)
         pass
 
     def _print_summary(self, elapsed):
-        print "\ntransferred {} file(s) in {} sec".format(self._file_count, round(elapsed, 2))
+        print("\ntransferred {} file(s) in {} sec".format(self._file_count, round(elapsed, 2)))
