@@ -21,6 +21,6 @@ class RemoteStorage(Storage):
         pass
 
     @abstractmethod
-    def upload(self, src, folder_name, file_name):
+    def upload(self, src, folder_name, file_name, checksum):
         pass
 

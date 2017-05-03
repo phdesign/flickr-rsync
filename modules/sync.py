@@ -12,7 +12,8 @@ class Sync(object):
 
     def run(self):
         if self._config.dry_run:
-            print "dry run enabled, simulating operation only...\n"
+            print "dry run enabled, simulating operation only..."
+        print "building folder list...\n"
         start = time.time()
 
         plan = self._make_plan()
@@ -33,13 +34,10 @@ class Sync(object):
         src_folders = self._src.list_folders()
         dest_folders = self._dest.list_folders()
         for src_folder in src_folders:
-            exists = False
-            for dest_folder in dest_folders:
-                if src_folder.name.lower() == dest_folder.name.lower():
-                    plan['merge'].append([src_folder, dest_folder])
-                    exists = True
-                    break
-            if not exists:
+            dest_folder = next((x for x in dest_folders if x.name.lower() == src_folder.name.lower()), None)
+            if dest_folder:
+                plan['merge'].append([src_folder, dest_folder])
+            else:
                 plan['copy'].append(src_folder)
         return plan
 
@@ -55,12 +53,8 @@ class Sync(object):
         src_files = self._src.list_files(src_folder)
         dest_files = self._dest.list_files(dest_folder)
         for src_file in src_files:
-            exists = False
-            for dest_file in dest_files:
-                if src_file.name.lower() == dest_file.name.lower():
-                    exists = True
-                    break
-            if not exists:
+            file_exists = next((True for x in dest_files if x.name.lower() == src_file.name.lower()), False)
+            if not file_exists:
                 print os.path.join(src_folder.name, src_file.name)
                 self._file_count += 1
                 if not self._config.dry_run:

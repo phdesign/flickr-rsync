@@ -8,14 +8,13 @@ from storage import Storage, RemoteStorage
 from file_info import FileInfo
 from folder_info import FolderInfo
 
-def copyfilep(src, dest):
-    if not os.path.exists(os.path.dirname(dest)):
+def mkdirp(path):
+    if not os.path.exists(os.path.dirname(path)):
         try:
-            os.makedirs(os.path.dirname(dest))
+            os.makedirs(os.path.dirname(path))
         except OSError as exc: # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
-    shutil.copyfile(src, dest)
 
 class LocalStorage(Storage):
     
@@ -55,7 +54,8 @@ class LocalStorage(Storage):
     def copy_file(self, file_info, folder_name, dest_storage):
         src = file_info.full_path
         if isinstance(dest_storage, RemoteStorage):
-            dest_storage.upload(src, folder_name, file_info.name)
+            dest_storage.upload(src, folder_name, file_info.name, file_info.checksum)
         else:
             dest = os.path.join(dest_storage.path, folder_name, file_info.name)
-            copyfilep(src, dest)
+            mkdirp(dest)
+            shutil.copyfile(src, dest)

@@ -69,8 +69,8 @@ class Config(object):
                             help='flickr API key')
         parser.add_argument('--api-secret', type=str,
                             help='flickr API secret')
-        parser.add_argument('--tags', type=str,
-                            help='comma seperated list of tags to apply to uploaded files on flickr')
+        parser.add_argument('--tags', type=str, metavar='"TAG1 TAG2"',
+                            help='space seperated list of tags to apply to uploaded files on flickr')
         parser.add_argument('--version', action='version', version='%(prog)s 0.1')
         parser.set_defaults(**self._read_ini())
         self._args = parser.parse_args()

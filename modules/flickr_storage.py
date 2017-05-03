@@ -10,9 +10,12 @@ import flickr_api
 from flickr_api.api import flickr
 from file_info import FileInfo
 from folder_info import FolderInfo
+from local_storage import mkdirp
 
-MAX_PAGES = 100
+MAX_PAGES = 1000
 TOKEN_FILENAME = '.flickrToken'
+CHECKSUM_PREFIX = 'checksum:md5'
+OAUTH_PERMISSIONS = 'write'
 
 class FlickrStorage(RemoteStorage):
 
@@ -60,36 +63,52 @@ class FlickrStorage(RemoteStorage):
                 break
 
         self._photos.update({x.id: x for x in all_photos})
+        print "{!r}".format(all_photos)
         files = [self._get_file_info(x) for x in all_photos]
         return [x for x in files 
             if (not self._config.include or re.search(self._config.include, x.name, flags=re.IGNORECASE)) and
                 (not self._config.exclude or not re.search(self._config.exclude, x.name, flags=re.IGNORECASE))]
 
     def download(self, file_info, dest):
-        # TODO: Make DRY
-        if not os.path.exists(os.path.dirname(dest)):
-            try:
-                os.makedirs(os.path.dirname(dest))
-            except OSError as exc: # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
-            
+        mkdirp(dest)
         photo = self._photos[file_info.id]
-        photo.save(dest, size_label = 'Original')
+        self._call_remote(photo.save, dest, size_label='Original')
 
-    def upload(self, src, folder_name, file_name):
-        # TODO: Send tags incl. checksum
-        flickr_api.upload(photo_file = src, title = file_name)
+    def upload(self, src, folder_name, file_name, checksum):
+        tags = self._config.tags
+        if checksum:
+            tags = '{} {}={}'.format(tags, CHECKSUM_PREFIX, checksum)
+        photo = self._call_remote(
+            flickr_api.upload,
+            photo_file=src, 
+            title=os.path.splitext(file_name)[0], 
+            tags=tags.strip(),
+            is_public=self._config.is_public,
+            is_friend=self._config.is_friend,
+            is_family=self._config.is_family,
+            async=1)
+        # We should put the album assignment on a separate thread. flickr.photos.upload.checkTickets
+        # This will mean we need to wait for async operations to finish before completing process.
+        # Maybe don't write file name to output until operation is complete
+
+        if folder_name:
+            photoset = self._get_folder_by_name(folder_name)
+            if not photoset:
+                photoset = self._call_remote(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
+            self._call_remote(photoset.addPhoto, photo=photo)
 
     def copy_file(self, file_info, folder_name, dest_storage):
         if isinstance(dest_storage, RemoteStorage):
             temp_file = NamedTemporaryFile()
             self.download(file_info, temp_file.name)
-            dest_storage.upload(temp_file.name, folder_name, file_info.name)
+            dest_storage.upload(temp_file.name, folder_name, file_info.name, file_info.checksum)
             temp_file.close()
         else:
             dest = os.path.join(dest_storage.path, folder_name, file_info.name)
             self.download(file_info, dest)
+
+    def _get_folder_by_name(self, name):
+        return next((x for x in self._photosets.values() if x.title.lower() == name.lower()), None)
 
     def _get_file_info(self, photo):
         name = photo.title if photo.title else photo.id
@@ -98,7 +117,7 @@ class FlickrStorage(RemoteStorage):
             name += "." + photo.originalformat
         if photo.tags:
             tags = photo.tags.split()
-            checksum = next((parts[1] for parts in (tag.split('=') for tag in tags) if parts[0] == "checksum:md5"), None)
+            checksum = next((parts[1] for parts in (tag.split('=') for tag in tags) if parts[0] == CHECKSUM_PREFIX), None)
         return FileInfo(id=photo.id, name=name, checksum=checksum)
 
     def _authenticate(self):
@@ -113,7 +132,7 @@ class FlickrStorage(RemoteStorage):
 
         else:
             auth_handler = flickr_api.auth.AuthHandler()
-            permissions_requested = "read"
+            permissions_requested = OAUTH_PERMISSIONS
             url = auth_handler.get_authorization_url(permissions_requested)
             webbrowser.open(url)
             print "Please enter the OAuth verifier tag once logged in:"
@@ -125,7 +144,7 @@ class FlickrStorage(RemoteStorage):
         self._user = flickr_api.test.login()
         self._is_authenticated = True
 
-    def _call_remote(self, fn, **kwargs):
+    def _call_remote(self, fn, *args, **kwargs):
         backoff = [0, 1, 3, 5, 10, 30, 60]
         if self._config.throttling > 0:
             time.sleep(self._config.throttling)
@@ -133,7 +152,7 @@ class FlickrStorage(RemoteStorage):
             if i > 0:
                 time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
             try:
-                return fn(**kwargs)
+                return fn(*args, **kwargs)
             except urllib2.URLError:
                 pass
-        return fn(**kwargs)
+        return fn(*args, **kwargs)
