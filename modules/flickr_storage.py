@@ -1,3 +1,4 @@
+# -*- encoding: utf8 -*-
 from __future__ import print_function
 import os
 import re
@@ -27,6 +28,13 @@ class FlickrStorage(RemoteStorage):
         self._photos = {}
 
     def list_folders(self):
+        """
+        Lists all photosets in Flickr
+
+        Returns:
+            A lazy loaded generator function of FolderInfo objects
+        """
+
         self._authenticate()
 
         walker = self._call_remote(flickr_api.objects.Walker, self._user.getPhotosets)
@@ -37,6 +45,20 @@ class FlickrStorage(RemoteStorage):
                 yield folder
 
     def list_files(self, folder):
+        """
+        Lists all photos within a photoset
+
+        Args:
+            folder: The FolderInfo object of the folder to list (from list_folders), or None to list all photos not 
+                in a photoset
+
+        Returns:
+            A lazy loaded generator function of FileInfo objects
+
+        Raises:
+            KeyError: If folder.id is unrecognised
+        """
+        
         self._authenticate()
 
         if not folder == None:
@@ -50,10 +72,21 @@ class FlickrStorage(RemoteStorage):
             if self._should_include(file_info.name, self._config.include, self._config.exclude):
                 yield file_info
 
-    def download(self, file_info, dest):
-        mkdirp(dest)
+    def download(self, file_info, dest_path):
+        """
+        Downloads a file from Flickr to local file system
+
+        Args:
+            file_info: The file info object (as returned by list_files) of the file to download
+            dest_path: The file system path to save the file to
+
+        Raises:
+            KeyError: If the file_info.id is unrecognised
+        """
+
+        mkdirp(dest_path)
         photo = self._photos[file_info.id]
-        self._call_remote(photo.save, dest, size_label='Original')
+        self._call_remote(photo.save, dest_path, size_label='Original')
 
     def upload(self, src, folder_name, file_name, checksum):
         tags = self._config.tags
