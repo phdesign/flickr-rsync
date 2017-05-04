@@ -58,3 +58,5 @@ python flickr-syncp.py flickr --exclude-dir '.*' --root-files --list-only
 * Multi-threading
 * Fix unicode characters on Windows
 * Use generators properly so that we process each file as it's receieved rather than wait to list all files then process them
+* Verbose logging
+* Allow search?

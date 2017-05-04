@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import os, sys
 import urllib2
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
             sync.run()
 
     except urllib2.URLError:
-        print "Network connection interrupted"
+        print("Network connection interrupted")
         sys.exit()
     except KeyboardInterrupt:
         sys.exit()

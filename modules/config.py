@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import __main__
 import ConfigParser
@@ -14,6 +15,7 @@ DEFAULTS = {
     'dest': '',
     'list_only': False,
     'list_format': 'tree',
+    'list_sort': False,
     'include': '\.(jpg|png|avi|mov|mpg|mp4|3gp)$',
     'include_dir': '',
     'exclude': '',
@@ -50,6 +52,8 @@ class Config(object):
                             help='list the files in --src instead of copying them')
         parser.add_argument('--list-format', choices=[self.LIST_FORMAT_TREE, self.LIST_FORMAT_CSV],
                             help='output format for --list-only, TREE for a tree based output or CSV')
+        parser.add_argument('--list-sort', action='store_true',
+                            help='sort alphabetically when --list-only, note that this forces buffering of remote sources so will be slower')
         parser.add_argument('--include', type=str, metavar='REGEX',
                             help='include only files matching REGEX')
         parser.add_argument('--include-dir', type=str, metavar='REGEX',
@@ -96,6 +100,8 @@ class Config(object):
             items['list_only'] = self._strtobool(items['list_only'])
         if items.get('list_format'):
             items['list_format'] = items['list_format'].lower()
+        if items.get('list_sort'):
+            items['list_sort'] = self._strtobool(items['list_sort'])
         if items.get('dry_run'):
             items['dry_run'] = self._strtobool(items['dry_run'])
         options.update(items)

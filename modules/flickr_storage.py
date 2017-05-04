@@ -1,4 +1,3 @@
-# -*- encoding: utf8 -*-
 from __future__ import print_function
 import os
 import re
@@ -34,10 +33,9 @@ class FlickrStorage(RemoteStorage):
         Returns:
             A lazy loaded generator function of FolderInfo objects
         """
-
         self._authenticate()
 
-        walker = self._call_remote(flickr_api.objects.Walker, self._user.getPhotosets)
+        walker = flickr_api.objects.Walker(self._call_remote, self._user.getPhotosets)
         for photoset in walker:
             self._photosets[photoset.id] = photoset
             folder = FolderInfo(id=photoset.id, name=photoset.title)
@@ -58,14 +56,13 @@ class FlickrStorage(RemoteStorage):
         Raises:
             KeyError: If folder.id is unrecognised
         """
-        
         self._authenticate()
 
         if not folder == None:
             operation = self._photosets[folder.id].getPhotos
         else:
             operation = self._user.getNotInSetPhotos
-        walker = self._call_remote(flickr_api.objects.Walker, operation, extras='original_format,tags')
+        walker = flickr_api.objects.Walker(self._call_remote, operation, extras='original_format,tags')
         for photo in walker:
             self._photos[photo.id] = photo
             file_info = self._get_file_info(photo)
@@ -74,7 +71,7 @@ class FlickrStorage(RemoteStorage):
 
     def download(self, file_info, dest_path):
         """
-        Downloads a file from Flickr to local file system
+        Downloads a photo from Flickr to local file system
 
         Args:
             file_info: The file info object (as returned by list_files) of the file to download
@@ -83,18 +80,28 @@ class FlickrStorage(RemoteStorage):
         Raises:
             KeyError: If the file_info.id is unrecognised
         """
-
         mkdirp(dest_path)
         photo = self._photos[file_info.id]
         self._call_remote(photo.save, dest_path, size_label='Original')
 
-    def upload(self, src, folder_name, file_name, checksum):
+    def upload(self, src_path, folder_name, file_name, checksum):
+        """
+        Uploads a photo to Flickr from local file system
+
+        Args:
+            src_path: The file system path to upload the photo from
+            folder_name: The photset name to add the photo to
+            file_name: The name of the photo, any extension will be removed
+
+        Raises:
+            KeyError: If the file_info.id is unrecognised
+        """
         tags = self._config.tags
         if checksum:
             tags = '{} {}={}'.format(tags, CHECKSUM_PREFIX, checksum)
         photo = self._call_remote(
             flickr_api.upload,
-            photo_file=src, 
+            photo_file=src_path, 
             title=os.path.splitext(file_name)[0], 
             tags=tags.strip(),
             is_public=self._config.is_public,
@@ -173,6 +180,6 @@ class FlickrStorage(RemoteStorage):
                 time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
             try:
                 return fn(*args, **kwargs)
-            except urllib2.URLError:
-                pass
+            except urllib2.URLError as ex:
+                print("  Retrying ({} of {}) after connection broken by '{}'".format(i+1, self._config.retry, ex))
         return fn(*args, **kwargs)
