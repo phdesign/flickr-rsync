@@ -59,20 +59,22 @@ class TreeWalker(Walker):
             print(self._format_leaf(
                 "{} [{:.6}]".format(x.name.encode('utf-8'), x.checksum) if x.checksum else x.name.encode('utf-8'), 
                 not has_next and not has_folders))
-        if has_folders:
-            print(UNICODE_BRANCH)
 
     def _print_folders(self, folders):
+        is_first = True
         for x, has_next in enumerate_peek(folders):
-            self._print_folder(x, not has_next) 
+            self._print_folder(x, is_first, not has_next) 
+            is_first = False
 
-    def _print_folder(self, folder, is_last):
+    def _print_folder(self, folder, is_first, is_last):
         files = self._storage.list_files(folder)
         if self._config.list_sort:
             files = sorted(files, key=lambda x: x.name)
         if not any(files):
             self._hidden_folder_count += 1
             return
+        if is_first and self._file_count > 0:
+            print(UNICODE_BRANCH)
         print(self._format_leaf(folder.name.encode('utf-8'), is_last))
         self._folder_count += 1
         prefix = UNICODE_LAST_BRANCH if is_last else UNICODE_BRANCH
