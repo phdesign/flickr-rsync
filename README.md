@@ -60,3 +60,5 @@ python flickr-syncp.py flickr --exclude-dir '.*' --root-files --list-only
 * Use generators properly so that we process each file as it's receieved rather than wait to list all files then process them
 * Verbose logging
 * Allow search?
+* If no API key, list flickr URL to signup
+* Webpage for successfullFlickr login
