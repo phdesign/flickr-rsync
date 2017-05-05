@@ -33,7 +33,7 @@ class Sync(object):
             'merge': []
         }
         src_folders = self._src.list_folders()
-        print("{} folders to consider".format(len(src_folders)))
+        # print("{} folders to consider".format(len(src_folders)))
         dest_folders = self._dest.list_folders()
         for src_folder in src_folders:
             dest_folder = next((x for x in dest_folders if x.name.lower() == src_folder.name.lower()), None)
