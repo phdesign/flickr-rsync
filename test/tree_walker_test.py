@@ -142,7 +142,6 @@ class TreeWalkerTest(unittest.TestCase):
         ], any_order=False)
         self.assertEqual(self.mock_print.call_count, 4)
 
-    @unittest.skip("")
     def test_should_print_all_folders(self):
         walker = TreeWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
@@ -153,13 +152,15 @@ class TreeWalkerTest(unittest.TestCase):
         walker.walk()
 
         self.mock_print.assert_has_calls([
-            call("Folder, Filename, Checksum"),
-            call("A Folder, A File, None"),
-            call("B Folder, B File, None")
+            call(u"├─── A Folder".encode('utf-8')),
+            call(u"│   └─── A File".encode('utf-8')),
+            call(u"│   ".encode('utf-8')),
+            call(u"└─── B Folder".encode('utf-8')),
+            call(u"    └─── B File".encode('utf-8')),
+            call("2 directories, 2 files read in 0.0 sec")
         ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 3)
+        self.assertEqual(self.mock_print.call_count, 6)
 
-    @unittest.skip("")
     def test_should_print_checksum_given_file_has_checksum(self):
         walker = TreeWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
@@ -169,12 +170,12 @@ class TreeWalkerTest(unittest.TestCase):
         walker.walk()
 
         self.mock_print.assert_has_calls([
-            call("Folder, Filename, Checksum"),
-            call("A Folder, C File, abc123")
+            call(u"└─── A Folder".encode('utf-8')),
+            call(u"    └─── C File [abc123]".encode('utf-8')),
+            call("1 directories, 1 files read in 0.0 sec")
         ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 2)
+        self.assertEqual(self.mock_print.call_count, 3)
 
-    @unittest.skip("")
     def test_should_sort_folders_and_files_given_sort_enabled(self):
         self.config.list_sort = True
         walker = TreeWalker(self.config, self.storage)
@@ -186,14 +187,16 @@ class TreeWalkerTest(unittest.TestCase):
         walker.walk()
 
         self.mock_print.assert_has_calls([
-            call("Folder, Filename, Checksum"),
-            call("A Folder, A File, None"),
-            call("B Folder, B File, None"),
-            call("B Folder, C File, abc123")
+            call(u"├─── A Folder".encode('utf-8')),
+            call(u"│   └─── A File".encode('utf-8')),
+            call(u"│   ".encode('utf-8')),
+            call(u"└─── B Folder".encode('utf-8')),
+            call(u"    ├─── B File".encode('utf-8')),
+            call(u"    └─── C File [abc123]".encode('utf-8')),
+            call("2 directories, 3 files read in 0.0 sec")
         ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 4)
+        self.assertEqual(self.mock_print.call_count, 7)
 
-    @unittest.skip("")
     def test_should_not_sort_folders_and_files_given_sort_disabled(self):
         self.config.list_sort = False
         walker = TreeWalker(self.config, self.storage)
@@ -205,12 +208,15 @@ class TreeWalkerTest(unittest.TestCase):
         walker.walk()
 
         self.mock_print.assert_has_calls([
-            call("Folder, Filename, Checksum"),
-            call("B Folder, C File, abc123"),
-            call("B Folder, B File, None"),
-            call("A Folder, A File, None")
+            call(u"├─── B Folder".encode('utf-8')),
+            call(u"│   ├─── C File [abc123]".encode('utf-8')),
+            call(u"│   └─── B File".encode('utf-8')),
+            call(u"│   ".encode('utf-8')),
+            call(u"└─── A Folder".encode('utf-8')),
+            call(u"    └─── A File".encode('utf-8')),
+            call("2 directories, 3 files read in 0.0 sec")
         ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 4)
+        self.assertEqual(self.mock_print.call_count, 7)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
