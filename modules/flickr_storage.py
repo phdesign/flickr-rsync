@@ -17,6 +17,28 @@ TOKEN_FILENAME = '.flickrToken'
 CHECKSUM_PREFIX = 'checksum:md5'
 OAUTH_PERMISSIONS = 'write'
 
+class Network(object):
+    _last_call = None
+
+    def __init__(self, config):
+        self._config = config
+
+    def call(self, fn, *args, **kwargs):
+        backoff = [0, 1, 3, 5, 10, 30, 60]
+        if self._config.throttling > 0 and self._last_call != None:
+            delay = self._config.throttling - (time.time() - self._last_call)
+            if delay > 0:
+                time.sleep(delay)
+        for i in range(self._config.retry):
+            if i > 0:
+                time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
+            try:
+                self._last_call = time.time()
+                return fn(*args, **kwargs)
+            except urllib2.URLError as ex:
+                print("  Retrying ({} of {}) after connection broken by '{}'".format(i+1, self._config.retry, ex))
+        return fn(*args, **kwargs)
+
 class FlickrStorage(RemoteStorage):
 
     def __init__(self, config):
@@ -25,6 +47,7 @@ class FlickrStorage(RemoteStorage):
         self._user = None
         self._photosets = {}
         self._photos = {}
+        self._net = Network(config)
 
     def list_folders(self):
         """
@@ -35,7 +58,7 @@ class FlickrStorage(RemoteStorage):
         """
         self._authenticate()
 
-        walker = flickr_api.objects.Walker(self._call_remote, self._user.getPhotosets)
+        walker = flickr_api.objects.Walker(self._net.call, self._user.getPhotosets)
         for photoset in walker:
             self._photosets[photoset.id] = photoset
             folder = FolderInfo(id=photoset.id, name=photoset.title)
@@ -62,7 +85,7 @@ class FlickrStorage(RemoteStorage):
             operation = self._photosets[folder.id].getPhotos
         else:
             operation = self._user.getNotInSetPhotos
-        walker = flickr_api.objects.Walker(self._call_remote, operation, extras='original_format,tags')
+        walker = flickr_api.objects.Walker(self._net.call, operation, extras='original_format,tags')
         for photo in walker:
             self._photos[photo.id] = photo
             file_info = self._get_file_info(photo)
@@ -82,7 +105,7 @@ class FlickrStorage(RemoteStorage):
         """
         mkdirp(dest_path)
         photo = self._photos[file_info.id]
-        self._call_remote(photo.save, dest_path, size_label='Original')
+        self._net.call(photo.save, dest_path, size_label='Original')
 
     def upload(self, src_path, folder_name, file_name, checksum):
         """
@@ -99,7 +122,7 @@ class FlickrStorage(RemoteStorage):
         tags = self._config.tags
         if checksum:
             tags = '{} {}={}'.format(tags, CHECKSUM_PREFIX, checksum)
-        photo = self._call_remote(
+        photo = self._net.call(
             flickr_api.upload,
             photo_file=src_path, 
             title=os.path.splitext(file_name)[0], 
@@ -116,9 +139,9 @@ class FlickrStorage(RemoteStorage):
         if folder_name:
             photoset = self._get_folder_by_name(folder_name)
             if not photoset:
-                photoset = self._call_remote(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
+                photoset = self._net.call(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
             else:
-                self._call_remote(photoset.addPhoto, photo=photo)
+                self._net.call(photoset.addPhoto, photo=photo)
 
     def copy_file(self, file_info, folder_name, dest_storage):
         if isinstance(dest_storage, RemoteStorage):
@@ -171,15 +194,3 @@ class FlickrStorage(RemoteStorage):
         self._user = flickr_api.test.login()
         self._is_authenticated = True
 
-    def _call_remote(self, fn, *args, **kwargs):
-        backoff = [0, 1, 3, 5, 10, 30, 60]
-        if self._config.throttling > 0:
-            time.sleep(self._config.throttling)
-        for i in range(self._config.retry):
-            if i > 0:
-                time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
-            try:
-                return fn(*args, **kwargs)
-            except urllib2.URLError as ex:
-                print("  Retrying ({} of {}) after connection broken by '{}'".format(i+1, self._config.retry, ex))
-        return fn(*args, **kwargs)
