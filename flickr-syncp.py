@@ -10,12 +10,15 @@ from modules.config import Config
 from modules.sync import Sync
 from modules.flickr_storage import FlickrStorage
 from modules.local_storage import LocalStorage
+from modules.fake_storage import FakeStorage
 from modules.tree_walker import TreeWalker
 from modules.csv_walker import CsvWalker
 
 def _get_storage(config, path):
     if path.lower() == Config.PATH_FLICKR:
         return FlickrStorage(config)
+    elif path.lower() == config.PATH_FAKE:
+        return FakeStorage(config)
     return LocalStorage(config, path)
 
 def _get_walker(config, storage, list_format):

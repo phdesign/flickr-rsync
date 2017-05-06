@@ -37,6 +37,7 @@ class Config(object):
     LIST_FORMAT_TREE = 'tree'
     LIST_FORMAT_CSV = 'csv'
     PATH_FLICKR = 'flickr'
+    PATH_FAKE = 'fake'
 
     def __getattr__(self, name):
         # Thanks: http://stackoverflow.com/questions/26467564/how-to-copy-all-attributes-of-one-python-object-to-another

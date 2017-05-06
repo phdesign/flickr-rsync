@@ -12,41 +12,15 @@ class CsvWalker(Walker):
     def walk(self):
         print("Folder, Filename, Checksum")
 
-        # folders = Observable.from_(self._storage.list_folders()).publish().auto_connect(2)
-        # root_files = Observable.from_((x, None) for x in self._storage.list_files(None))
-        # folders.subscribe(lambda folder: print("{}".format(folder.name)))
-        # folders.flat_map(lambda folder: ((x, folder) for x in self._storage.list_files(folder))) \
-            # .start_with(root_files) \
-            # .subscribe(lambda (x, folder): print("{}, {}, {}".format(folder.name, x.name.encode('utf-8'), x.checksum)))
-
-        Observable.from_(self._storage.list_folders()) \
-            .flat_map(lambda folder: ((x, folder) for x in self._storage.list_files(folder))) \
-            .subscribe(lambda (x, folder): print("{}, {}, {}".format(folder.name, x.name.encode('utf-8'), x.checksum)))
-
-        # if self._config.list_sort:
-            # folders = sorted(folders, key=lambda x: x.name)
-        # print("Folder, Filename, Checksum")
-        # if self._config.root_files:
-            # self._print_root_files()
-        # self._print_folders(folders)
-
-    def _print_root_files(self):
-        files = self._storage.list_files(None)
+        folders = Observable.from_(self._storage.list_folders()) \
+            .flat_map(lambda folder: ((fileinfo, folder) for fileinfo in self._storage.list_files(folder)))
         if self._config.list_sort:
-            files = sorted(files, key=lambda x: x.name)
-        self._print_files("", files)
-
-    def _print_folders(self, folders):
-        for x in folders:
-            self._print_folder(x) 
-
-    def _print_folder(self, folder):
-        files = self._storage.list_files(folder)
-        if self._config.list_sort:
-            files = sorted(files, key=lambda x: x.name)
-        self._print_files(folder.name.encode('utf-8'), files)
+            folders.to_sorted_list(key_selector=lambda (fileinfo, folder): '{}x{}'.format(folder.name, fileinfo.name)) \
+                .subscribe(lambda items: [self._print_file(folder, fileinfo) for fileinfo, folder in items])
+        else:
+            folders.subscribe(lambda (fileinfo, folder): self._print_file(folder, fileinfo))
     
-    def _print_files(self, folder_name, files):
-        for i, x in enumerate(files):
-            print("{}, {}, {}".format(folder_name, x.name.encode('utf-8'), x.checksum))
+    def _print_file(self, folder, fileinfo):
+        print("{}, {}, {}".format(folder.name, fileinfo.name.encode('utf-8'), fileinfo.checksum))
+
 
