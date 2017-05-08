@@ -24,6 +24,7 @@ class Network(object):
         self._config = config
 
     def call(self, fn, *args, **kwargs):
+        # print("{}(*args={}, **kwargs={})".format(fn, args, kwargs))
         backoff = [0, 1, 3, 5, 10, 30, 60]
         if self._config.throttling > 0 and self._last_call != None:
             delay = self._config.throttling - (time.time() - self._last_call)
@@ -61,7 +62,7 @@ class FlickrStorage(RemoteStorage):
         walker = flickr_api.objects.Walker(self._net.call, self._user.getPhotosets)
         for photoset in walker:
             self._photosets[photoset.id] = photoset
-            folder = FolderInfo(id=photoset.id, name=photoset.title)
+            folder = FolderInfo(id=photoset.id, name=photoset.title.encode('utf-8'))
             if self._should_include(folder.name, self._config.include_dir, self._config.exclude_dir):
                 yield folder
 
@@ -154,10 +155,10 @@ class FlickrStorage(RemoteStorage):
             self.download(file_info, dest)
 
     def _get_folder_by_name(self, name):
-        return next((x for x in self._photosets.values() if x.title.lower() == name.lower()), None)
+        return next((x for x in self._photosets.values() if x.title.encode('utf-8').lower() == name.lower()), None)
 
     def _get_file_info(self, photo):
-        name = photo.title if photo.title else photo.id
+        name = photo.title.encode('utf-8') if photo.title else photo.id
         checksum = None
         if photo.originalformat:
             name += "." + photo.originalformat

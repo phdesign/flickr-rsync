@@ -1,6 +1,8 @@
 from __future__ import print_function
+import multiprocessing
 from walker import Walker
 from rx import Observable
+import time
 
 class CsvWalker(Walker):
     
@@ -9,19 +11,24 @@ class CsvWalker(Walker):
         self._storage = storage
 
     def walk(self):
+        start = time.time()
         print("Folder, Filename, Checksum")
 
         folders = Observable.from_(self._storage.list_folders())
         if self._config.root_files:
            folders = folders.start_with(None) 
-        files = folders.flat_map(lambda folder: ((fileinfo, folder) for fileinfo in self._storage.list_files(folder)))
+        files = folders.concat_map(lambda folder: Observable.from_((fileinfo, folder) for fileinfo in self._storage.list_files(folder)))
         if self._config.list_sort:
             files.to_sorted_list(key_selector=lambda (fileinfo, folder): (folder.name if folder else '', fileinfo.name)) \
-                .subscribe(lambda items: [self._print_file(folder, fileinfo) for fileinfo, folder in items])
+                .subscribe(on_next=lambda items: [self._print_file(folder, fileinfo) for fileinfo, folder in items],
+                    on_completed=lambda: self._print_summary(time.time() - start))
         else:
-            files.subscribe(lambda (fileinfo, folder): self._print_file(folder, fileinfo))
+            files.subscribe(on_next=lambda (fileinfo, folder): self._print_file(folder, fileinfo),
+                on_completed=lambda: self._print_summary(time.time() - start))
     
     def _print_file(self, folder, fileinfo):
-        print("{}, {}, {}".format(folder.name if folder else '', fileinfo.name.encode('utf-8'), fileinfo.checksum))
+        print("{}, {}, {}".format(folder.name if folder else '', fileinfo.name, fileinfo.checksum))
 
+    def _print_summary(self, elapsed):
+        print("\ndone in {} sec".format(round(elapsed, 2)))
 

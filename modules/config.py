@@ -80,6 +80,7 @@ class Config(object):
         parser.add_argument('--version', action='version', version='%(prog)s 0.1')
         parser.set_defaults(**self._read_ini())
         self._args = parser.parse_args()
+        print("{!r}".format(self._args))
 
     def _read_ini(self):
         config = ConfigParser.SafeConfigParser()
@@ -96,46 +97,54 @@ class Config(object):
     def _read_options_section(self, config, options):
         if not config.has_section(OPTIONS_SECTION):
             return
-        items = dict(config.items(OPTIONS_SECTION))
-        if items.get('list_only'):
-            items['list_only'] = self._strtobool(items['list_only'])
-        if items.get('list_format'):
-            items['list_format'] = items['list_format'].lower()
-        if items.get('list_sort'):
-            items['list_sort'] = self._strtobool(items['list_sort'])
-        if items.get('dry_run'):
-            items['dry_run'] = self._strtobool(items['dry_run'])
+        items = self._read_section(config, NETWORK_SECTION, {
+            'list_only': bool,
+            'list_format': lambda item: item.lower(),
+            'list_sort': bool,
+            'dry_run': bool
+        })
         options.update(items)
 
     def _read_network_section(self, config, options):
         if not config.has_section(NETWORK_SECTION):
             return
-        items = dict(config.items(NETWORK_SECTION))
-        if items.get('throttling'):
-            items['throttling'] = float(items['throttling'])
-        if items.get('retry'):
-            items['retry'] = int(items['retry'])
+        items = self._read_section(config, NETWORK_SECTION, {
+            'throttling': float,
+            'retry': int
+        })
         options.update(items)
 
     def _read_files_section(self, config, options):
         if not config.has_section(FILES_SECTION):
             return
-        items = dict(config.items(FILES_SECTION))
-        if items.get('root_files'):
-            items['root_files'] = self._strtobool(items['root_files'])
+        items = self._read_section(config, FILES_SECTION, {
+            'root_files': bool    
+        })
         options.update(items)
 
     def _read_flickr_section(self, config, options):
         if not config.has_section(FLICKR_SECTION):
             return
-        items = dict(config.items(FLICKR_SECTION))
-        if items.get('is_public'):
-            items['is_public'] = int(items['is_public'])
-        if items.get('is_friend'):
-            items['is_friend'] = int(items['is_friend'])
-        if items.get('is_family'):
-            items['is_family'] = int(items['is_family'])
+        items = self._read_section(config, FLICKR_SECTION, {
+            'is_public': int,
+            'is_friend': int,
+            'is_family': int
+        })
         options.update(items)
+
+    def _read_section(self, config, section, types):
+        items = dict(config.items(section))
+        for prop, typeinfo in types.iteritems():
+            if (items.get(prop)):
+                if (typeinfo == int):
+                    items[prop] = int(items[prop])
+                elif (typeinfo == float):
+                    items[prop] = float(items[prop])
+                elif (typeinfo == bool):
+                    items[prop] = self._strtobool(items[prop])
+                elif (callable(typeinfo)):
+                    items[prop] = typeinfo(items[prop])
+        return items
 
     def _strtobool(self, val):
         return bool(strtobool(val))

@@ -41,7 +41,7 @@ class LocalStorage(Storage):
 
     def list_folders(self):
         return [
-            FolderInfo(id=i, name=name, full_path=path)
+            FolderInfo(id=i, name=name.encode('utf-8'), full_path=path.encode('utf-8'))
             for i, (name, path) in enumerate((x, os.path.join(self.path, x)) for x in os.listdir(self.path))
             if self._should_include(name, self._config.include_dir, self._config.exclude_dir) and os.path.isdir(path)
         ]
@@ -49,7 +49,7 @@ class LocalStorage(Storage):
     def list_files(self, folder):
         folder_abs = os.path.join(self.path, folder.name) if folder else self.path
         return [
-            FileInfo(id=i, name=name, full_path=path, checksum=self.md5_checksum(path))
+            FileInfo(id=i, name=name.encode('utf-8'), full_path=path.encode('utf-8'), checksum=self.md5_checksum(path))
             for i, (name, path) in enumerate((x, os.path.join(folder_abs, x)) for x in os.listdir(folder_abs))
             if self._should_include(path, self._config.include, self._config.exclude) and os.path.isfile(path)
         ]
