@@ -80,7 +80,6 @@ class Config(object):
         parser.add_argument('--version', action='version', version='%(prog)s 0.1')
         parser.set_defaults(**self._read_ini())
         self._args = parser.parse_args()
-        print("{!r}".format(self._args))
 
     def _read_ini(self):
         config = ConfigParser.SafeConfigParser()

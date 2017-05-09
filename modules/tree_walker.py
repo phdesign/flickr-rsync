@@ -43,17 +43,23 @@ class TreeWalker(Walker):
     def walk(self):
         start = time.time()
 
-        folders = Observable.from_(self._storage.list_folders())
+        folderlist = self._storage.list_folders()
+        if self._config.list_sort:
+            folderlist = sorted(folderlist, key=lambda x: x.name)
+        folders = Observable.from_(folderlist)
         if self._config.root_files:
            folders = folders.start_with(None) 
-        files = folders.concat_map(lambda folder: Observable.from_((fileinfo, folder) for fileinfo in self._storage.list_files(folder)))
-        if self._config.list_sort:
-            files.to_sorted_list(key_selector=lambda (fileinfo, folder): (folder.name if folder else '', fileinfo.name)) \
-                .subscribe(on_next=lambda items: [self._print_file(folder, fileinfo) for fileinfo, folder in items],
-                    on_completed=lambda: self._print_summary(time.time() - start))
-        else:
-            files.subscribe(on_next=lambda (fileinfo, folder): self._print_file(folder, fileinfo),
-                on_completed=lambda: self._print_summary(time.time() - start))
+        folders.subscribe(on_next=lambda folder: print(folder.name if folder else 'None'),
+            on_completed=lambda: self._print_summary(time.time() - start))
+
+        # files = folders.map(lambda folder: Observable.from_((fileinfo, folder) for fileinfo in self._storage.list_files(folder)))
+        # if self._config.list_sort:
+            # files.to_sorted_list(key_selector=lambda (fileinfo, folder): (folder.name if folder else '', fileinfo.name)) \
+                # .subscribe(on_next=lambda items: [self._print_file(folder, fileinfo) for fileinfo, folder in items],
+                    # on_completed=lambda: self._print_summary(time.time() - start))
+        # else:
+            # files.subscribe(on_next=lambda (fileinfo, folder): self._print_file(folder, fileinfo),
+                # on_completed=lambda: self._print_summary(time.time() - start))
 
     def _print_file(self, folder, fileinfo):
         print("{}{}{}".format(UNICODE_LEAF, fileinfo.name, fileinfo.checksum or ''))

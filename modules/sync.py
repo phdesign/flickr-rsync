@@ -2,6 +2,7 @@ from __future__ import print_function
 import os
 import operator
 import time
+from rx import Observable
 
 class Sync(object):
     
@@ -17,31 +18,16 @@ class Sync(object):
         print("building folder list...")
         start = time.time()
 
-        plan = self._make_plan()
-        for src_folder in plan['copy']:
-            print(src_folder.name + os.sep)
-            self._copy_folder(src_folder)
-        for (src_folder, dest_folder) in plan['merge']:
-            print(src_folder.name + os.sep)
-            self._merge_folders(src_folder, dest_folder)
-
-        self._print_summary(time.time() - start)
-
-    def _make_plan(self):
-        plan = {
-            'copy': [],
-            'merge': []
-        }
-        src_folders = self._src.list_folders()
-        # print("{} folders to consider".format(len(src_folders)))
-        dest_folders = self._dest.list_folders()
-        for src_folder in src_folders:
-            dest_folder = next((x for x in dest_folders if x.name.lower() == src_folder.name.lower()), None)
-            if dest_folder:
-                plan['merge'].append([src_folder, dest_folder])
-            else:
-                plan['copy'].append(src_folder)
-        return plan
+        dest_folders = {folder.name.lower(): folder for folder in self._dest.list_folders()}
+        src_folders = Observable.from_(self._src.list_folders())
+        to_merge = []
+        if self._config.root_files:
+           src_folders = src_folders.start_with(None)
+        src_folders.subscribe(
+            on_next=lambda folder: to_merge.append((folder, dest_folders[folder.name.lower()])) \
+                if folder.name.lower() in dest_folders else self._copy_folder(folder),
+            on_completed=lambda: [self._merge_folders(src, dest) for (src, dest) in to_merge] \
+                and self._print_summary(time.time() - start))
 
     def _copy_folder(self, folder):
         src_files = self._src.list_files(folder)
