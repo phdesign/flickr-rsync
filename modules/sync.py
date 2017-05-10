@@ -2,7 +2,9 @@ from __future__ import print_function
 import os
 import operator
 import time
+from functools import partial
 from rx import Observable
+from rx.concurrency import ThreadPoolScheduler
 
 class Sync(object):
     
@@ -18,8 +20,8 @@ class Sync(object):
         print("building folder list...")
         start = time.time()
 
-        dest_folders = {folder.name.lower(): folder for folder in self._dest.list_folders()}
         src_folders = Observable.from_(self._src.list_folders())
+        dest_folders = {folder.name.lower(): folder for folder in self._dest.list_folders()}
         to_merge = []
         if self._config.root_files:
            src_folders = src_folders.start_with(None)
@@ -30,24 +32,24 @@ class Sync(object):
                 and self._print_summary(time.time() - start))
 
     def _copy_folder(self, folder):
-        src_files = self._src.list_files(folder)
-        for src_file in src_files:
-            print(os.path.join(folder.name, src_file.name))
-            self._file_count += 1
-            if not self._config.dry_run:
-                self._src.copy_file(src_file, folder.name, self._dest)
+        pool_scheduler = ThreadPoolScheduler(4)
+        Observable.from_(self._src.list_files(folder)) \
+            .observe_on(pool_scheduler) \
+            .subscribe(partial(self._copy_file, folder.name))
 
     def _merge_folders(self, src_folder, dest_folder):
-        src_files = self._src.list_files(src_folder)
-        dest_files = self._dest.list_files(dest_folder)
-        for src_file in src_files:
-            file_exists = next((True for x in dest_files if x.name.lower() == src_file.name.lower()), False)
-            if not file_exists:
-                print(os.path.join(src_folder.name, src_file.name))
-                self._file_count += 1
-                if not self._config.dry_run:
-                    self._src.copy_file(src_file, src_folder.name, self._dest)
-        pass
+        pool_scheduler = ThreadPoolScheduler(4)
+        dest_files = [fileinfo.name.lower() for fileinfo in self._dest.list_files(dest_folder)]
+        Observable.from_(self._src.list_files(src_folder)) \
+            .filter(lambda fileinfo: not fileinfo.name.lower() in dest_files) \
+            .observe_on(pool_scheduler) \
+            .subscribe(partial(self._copy_file, src_folder.name))
+
+    def _copy_file(self, folder_name, fileinfo):
+        print(os.path.join(folder_name, fileinfo.name))
+        self._file_count += 1
+        if not self._config.dry_run:
+            self._src.copy_file(fileinfo, folder_name, self._dest)
 
     def _print_summary(self, elapsed):
         print("\ntransferred {} file(s) in {} sec".format(self._file_count, round(elapsed, 2)))
