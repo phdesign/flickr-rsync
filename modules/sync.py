@@ -25,25 +25,34 @@ class Sync(object):
         to_merge = []
         if self._config.root_files:
            src_folders = src_folders.start_with(None)
-        src_folders.subscribe(
-            on_next=lambda folder: to_merge.append((folder, dest_folders[folder.name.lower()])) \
-                if folder.name.lower() in dest_folders else self._copy_folder(folder),
-            on_completed=lambda: [self._merge_folders(src, dest) for (src, dest) in to_merge] \
-                and self._print_summary(time.time() - start))
+        src_folders \
+            .flat_map(lambda f: self._merge_folders(f, dest_folders[f.name.lower()]) \
+                if f.name.lower() in dest_folders else self._copy_folder(f)) \
+            .subscribe(on_completed=lambda: self._print_summary(time.time() - start))
+
+        # src_folders.subscribe(
+            # on_next=lambda folder: to_merge.append((folder, dest_folders[folder.name.lower()])) \
+                # if folder.name.lower() in dest_folders else self._copy_folder(folder),
+            # on_completed=lambda: [self._merge_folders(src, dest) for (src, dest) in to_merge] \
+                # and self._print_summary(time.time() - start))
 
     def _copy_folder(self, folder):
+        print("copy " + folder.name)
         pool_scheduler = ThreadPoolScheduler(4)
-        Observable.from_(self._src.list_files(folder)) \
-            .observe_on(pool_scheduler) \
-            .subscribe(partial(self._copy_file, folder.name))
+        source = Observable.from_(self._src.list_files(folder)) \
+            .observe_on(pool_scheduler)
+        source.subscribe(partial(self._copy_file, folder.name))
+        return source
 
     def _merge_folders(self, src_folder, dest_folder):
+        print("merge " + folder.name)
         pool_scheduler = ThreadPoolScheduler(4)
         dest_files = [fileinfo.name.lower() for fileinfo in self._dest.list_files(dest_folder)]
-        Observable.from_(self._src.list_files(src_folder)) \
+        source = Observable.from_(self._src.list_files(src_folder)) \
             .filter(lambda fileinfo: not fileinfo.name.lower() in dest_files) \
-            .observe_on(pool_scheduler) \
-            .subscribe(partial(self._copy_file, src_folder.name))
+            .observe_on(pool_scheduler)
+        source.subscribe(partial(self._copy_file, src_folder.name))
+        return source
 
     def _copy_file(self, folder_name, fileinfo):
         print(os.path.join(folder_name, fileinfo.name))
