@@ -2,9 +2,8 @@ from __future__ import print_function
 import os
 import operator
 import time
-from functools import partial
 from rx import Observable
-from rx.concurrency import ThreadPoolScheduler
+from rx.core import Scheduler
 
 class Sync(object):
     
@@ -28,31 +27,21 @@ class Sync(object):
         src_folders \
             .flat_map(lambda f: self._merge_folders(f, dest_folders[f.name.lower()]) \
                 if f.name.lower() in dest_folders else self._copy_folder(f)) \
+            .observe_on(Scheduler.event_loop) \
             .subscribe(on_completed=lambda: self._print_summary(time.time() - start))
-
-        # src_folders.subscribe(
-            # on_next=lambda folder: to_merge.append((folder, dest_folders[folder.name.lower()])) \
-                # if folder.name.lower() in dest_folders else self._copy_folder(folder),
-            # on_completed=lambda: [self._merge_folders(src, dest) for (src, dest) in to_merge] \
-                # and self._print_summary(time.time() - start))
+        pass
 
     def _copy_folder(self, folder):
         print("copy " + folder.name)
-        pool_scheduler = ThreadPoolScheduler(4)
-        source = Observable.from_(self._src.list_files(folder)) \
-            .observe_on(pool_scheduler)
-        source.subscribe(partial(self._copy_file, folder.name))
-        return source
+        return Observable.from_(self._src.list_files(folder)) \
+                .flat_map(lambda f: Observable.start(lambda: self._copy_file(folder.name, f)))
 
     def _merge_folders(self, src_folder, dest_folder):
         print("merge " + folder.name)
-        pool_scheduler = ThreadPoolScheduler(4)
         dest_files = [fileinfo.name.lower() for fileinfo in self._dest.list_files(dest_folder)]
-        source = Observable.from_(self._src.list_files(src_folder)) \
+        return Observable.from_(self._src.list_files(src_folder)) \
             .filter(lambda fileinfo: not fileinfo.name.lower() in dest_files) \
-            .observe_on(pool_scheduler)
-        source.subscribe(partial(self._copy_file, src_folder.name))
-        return source
+            .flat_map(lambda f: Observable.start(lambda: self._copy_file(folder.name, f)))
 
     def _copy_file(self, folder_name, fileinfo):
         print(os.path.join(folder_name, fileinfo.name))
