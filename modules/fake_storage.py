@@ -15,13 +15,13 @@ class FakeStorage(Storage):
         FakeStorage.fake_count += 1
 
     def list_folders(self):
-        folder_count = 5
+        folder_count = 2
         for i in range(folder_count):
             name = '{}{} Folder'.format(self.prefix, self._get_char(i, folder_count))
             yield self._intense_calculation(FolderInfo(id=i, name=name))
 
     def list_files(self, folder):
-        file_count = 5
+        file_count = 4
         for i in range(file_count):
             name = '{}{} File'.format(self.prefix, self._get_char(i, file_count))
             yield self._intense_calculation(FileInfo(id=i, name=name))
@@ -35,7 +35,7 @@ class FakeStorage(Storage):
 
     def _intense_calculation(self, value):
         # sleep for a random short duration between 0.5 to 2.0 seconds to simulate a long-running calculation
-        time.sleep(random.randint(5, 20) * .1)
+        time.sleep(random.randint(2, 6) * .1)
         return value
 
 
