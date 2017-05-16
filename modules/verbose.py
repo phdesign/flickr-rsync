@@ -6,5 +6,7 @@ def set_config(config):
     _config = config
 
 def vprint(*args, **kwargs):
-    if _config.verbose:
+    if _config == None:
+        raise RuntimeError("verbose.set_config must be called before vprint is used")
+    elif _config.verbose:
         print(*args, **kwargs)
