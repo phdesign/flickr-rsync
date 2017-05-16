@@ -28,7 +28,6 @@ class FakeStorage(Storage):
 
     def copy_file(self, fileinfo, folder_name, dest_storage):
         self._intense_calculation(None)
-        print(os.path.join(folder_name, fileinfo.name) + "...copied")
 
     def _get_char(self, num, max_num):
         return str(unichr((64 + max_num) - num))

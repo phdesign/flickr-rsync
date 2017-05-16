@@ -29,7 +29,8 @@ DEFAULTS = {
     'tags': 'flickr-syncp',
     'is_public': 0,
     'is_friend': 0,
-    'is_family': 0
+    'is_family': 0,
+    'verbose': False
 }
 
 class Config(object):
@@ -77,6 +78,8 @@ class Config(object):
                             help='flickr API secret')
         parser.add_argument('--tags', type=str, metavar='"TAG1 TAG2"',
                             help='space seperated list of tags to apply to uploaded files on flickr')
+        parser.add_argument('-v', '--verbose', action='store_true',
+                            help='increase verbosity')
         parser.add_argument('--version', action='version', version='%(prog)s 0.1')
         parser.set_defaults(**self._read_ini())
         self._args = parser.parse_args()
@@ -100,7 +103,8 @@ class Config(object):
             'list_only': bool,
             'list_format': lambda item: item.lower(),
             'list_sort': bool,
-            'dry_run': bool
+            'dry_run': bool,
+            'verbose': bool
         })
         options.update(items)
 

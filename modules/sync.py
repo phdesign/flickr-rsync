@@ -2,11 +2,10 @@ from __future__ import print_function
 import os
 import operator
 import time
+from threading import current_thread
 from rx import Observable
 from rx.core import Scheduler
-from threading import current_thread
-from functools import partial
-from rx.concurrency import ThreadPoolScheduler, EventLoopScheduler
+from verbose import vprint
 
 class Sync(object):
     
@@ -35,36 +34,39 @@ class Sync(object):
             .filter(lambda (key, folder): key not in dest_folders) \
             .flat_map(lambda (key, folder): self._copy_folder(folder)) \
             .subscribe(
-                on_completed=lambda: print("copy done. thread: " + current_thread().name),
-                on_error=lambda err: print("copy error: {}".format(err)))
+                on_completed=lambda: vprint("finished copying folders"))
 
         src_folders \
             .filter(lambda (key, folder): key in dest_folders) \
-            .flat_map(lambda (key, folder): self._merge_folders(folder, dest_folders[key])) \
-            .subscribe(
-                on_completed=lambda: print("merge done. thread: " + current_thread().name),
-                on_error=lambda err: print("merge error: {}".format(err)))
+            .subscribe(lambda (key, folder): to_merge.append((folder, dest_folders[key])))
 
         src_folders.connect()
+
+        Observable.from_(to_merge) \
+            .flat_map(lambda (src, dest): self._merge_folders(src, dest)) \
+            .subscribe(
+                on_completed=lambda: vprint("finished merging folders"))
+            
         self._print_summary(time.time() - start)
 
     def _copy_folder(self, folder):
-        print("copy " + folder.name + " thread: " + current_thread().name)
+        vprint("copying " + folder.name + " on thread: " + current_thread().name)
         return Observable.from_(self._src.list_files(folder)) \
             .flat_map(lambda f: Observable.start(lambda: self._copy_file(folder.name, f), Scheduler.current_thread))
 
     def _merge_folders(self, src_folder, dest_folder):
-        print("merge " + src_folder.name + " thread: " + current_thread().name)
+        vprint("merging " + src_folder.name + " on thread: " + current_thread().name)
         dest_files = [fileinfo.name.lower() for fileinfo in self._dest.list_files(dest_folder)]
         return Observable.from_(self._src.list_files(src_folder)) \
             .filter(lambda fileinfo: not fileinfo.name.lower() in dest_files) \
             .flat_map(lambda f: Observable.start(lambda: self._copy_file(src_folder.name, f), Scheduler.current_thread))
 
     def _copy_file(self, folder_name, fileinfo):
-        print(os.path.join(folder_name, fileinfo.name) + " thread: " + current_thread().name)
+        print(os.path.join(folder_name, fileinfo.name))
         self._file_count += 1
         if not self._config.dry_run:
             self._src.copy_file(fileinfo, folder_name, self._dest)
+        vprint(os.path.join(folder_name, fileinfo.name) + "...copied on thread: " + current_thread().name)
 
     def _print_summary(self, elapsed):
-        print("\ntransferred {} file(s) in {} sec".format(self._file_count, round(elapsed, 2)) + " thread: " + current_thread().name)
+        print("\ntransferred {} file(s) in {} sec".format(self._file_count, round(elapsed, 2)))

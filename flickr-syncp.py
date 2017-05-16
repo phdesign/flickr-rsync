@@ -5,6 +5,7 @@ import urllib2
 
 # Load third party dependencies, check in /libs folder if you've installed them there
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/libs')
+import modules.verbose as verbose
 from modules.storage import Storage
 from modules.config import Config
 from modules.sync import Sync
@@ -33,6 +34,7 @@ if __name__ == "__main__":
     try:
         config = Config()
         config.read()
+        verbose.set_config(config)
 
         src_storage = _get_storage(config, config.src)
         if config.list_only:
