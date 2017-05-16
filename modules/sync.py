@@ -15,7 +15,6 @@ class Sync(object):
         self._src = src
         self._dest = dest
         self._file_count = 0
-        self._pool_scheduler = ThreadPoolScheduler(4)
 
     def run(self):
         if self._config.dry_run:
@@ -23,35 +22,43 @@ class Sync(object):
         print("building folder list...")
         start = time.time()
 
-        main_thread_scheduler = EventLoopScheduler(lambda x: current_thread())
-        src_folders = Observable.from_(self._src.list_folders())
+        to_merge = []
         dest_folders = {folder.name.lower(): folder for folder in self._dest.list_folders()}
+        src_folders = Observable.from_(self._src.list_folders()) \
+            .map(lambda f: (f.name.lower(), f)) \
+            .publish()
+
         if self._config.root_files:
            src_folders = src_folders.start_with(None)
+
         src_folders \
-            .flat_map(lambda f: self._merge_folders(f, dest_folders[f.name.lower()]) \
-                if f.name.lower() in dest_folders else self._copy_folder(f)) \
-            .observe_on(Scheduler.event_loop) \
-            .to_blocking() \
+            .filter(lambda (key, folder): key not in dest_folders) \
+            .flat_map(lambda (key, folder): self._copy_folder(folder)) \
             .subscribe(
-                on_next=lambda x: print("on_next: {}, thread: {}".format(x, current_thread().name)),
-                on_completed=lambda: print("done. thread: " + current_thread().name),
-                on_error=lambda err: print("err: {}".format(err)))
-        
+                on_completed=lambda: print("copy done. thread: " + current_thread().name),
+                on_error=lambda err: print("copy error: {}".format(err)))
+
+        src_folders \
+            .filter(lambda (key, folder): key in dest_folders) \
+            .flat_map(lambda (key, folder): self._merge_folders(folder, dest_folders[key])) \
+            .subscribe(
+                on_completed=lambda: print("merge done. thread: " + current_thread().name),
+                on_error=lambda err: print("merge error: {}".format(err)))
+
+        src_folders.connect()
         self._print_summary(time.time() - start)
-        time.sleep(2)
 
     def _copy_folder(self, folder):
         print("copy " + folder.name + " thread: " + current_thread().name)
         return Observable.from_(self._src.list_files(folder)) \
-            .flat_map(lambda f: Observable.start(lambda: self._copy_file(folder.name, f)))
+            .flat_map(lambda f: Observable.start(lambda: self._copy_file(folder.name, f), Scheduler.current_thread))
 
     def _merge_folders(self, src_folder, dest_folder):
-        print("merge " + folder.name + " thread: " + current_thread().name)
+        print("merge " + src_folder.name + " thread: " + current_thread().name)
         dest_files = [fileinfo.name.lower() for fileinfo in self._dest.list_files(dest_folder)]
         return Observable.from_(self._src.list_files(src_folder)) \
             .filter(lambda fileinfo: not fileinfo.name.lower() in dest_files) \
-            .flat_map(lambda f: Observable.start(lambda: self._copy_file(folder.name, f)))
+            .flat_map(lambda f: Observable.start(lambda: self._copy_file(src_folder.name, f), Scheduler.current_thread))
 
     def _copy_file(self, folder_name, fileinfo):
         print(os.path.join(folder_name, fileinfo.name) + " thread: " + current_thread().name)
