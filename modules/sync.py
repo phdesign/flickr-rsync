@@ -32,7 +32,7 @@ class Sync(object):
 
         src_folders \
             .filter(lambda (key, folder): key not in dest_folders) \
-            .flat_map(lambda (key, folder): self._copy_folder(folder)) \
+            .flat_map(lambda (key, folder): self._copy_folder(folder, None)) \
             .subscribe(
                 on_completed=lambda: vprint("finished copying folders"))
 
@@ -43,20 +43,16 @@ class Sync(object):
         src_folders.connect()
 
         Observable.from_(to_merge) \
-            .flat_map(lambda (src, dest): self._merge_folders(src, dest)) \
+            .flat_map(lambda (src, dest): self._copy_folder(src, dest)) \
             .subscribe(
                 on_completed=lambda: vprint("finished merging folders"))
             
         self._print_summary(time.time() - start)
 
-    def _copy_folder(self, folder):
-        vprint("copying " + folder.name + " on thread: " + current_thread().name)
-        return Observable.from_(self._src.list_files(folder)) \
-            .flat_map(lambda f: Observable.start(lambda: self._copy_file(folder.name, f), Scheduler.current_thread))
-
-    def _merge_folders(self, src_folder, dest_folder):
-        vprint("merging " + src_folder.name + " on thread: " + current_thread().name)
-        dest_files = [fileinfo.name.lower() for fileinfo in self._dest.list_files(dest_folder)]
+    def _copy_folder(self, src_folder, dest_folder):
+        vprint("{} {} on thread: {}".format("merging" if dest_folder else "copying", 
+            src_folder.name, current_thread().name))
+        dest_files = [fileinfo.name.lower() for fileinfo in self._dest.list_files(dest_folder)] if dest_folder else []
         return Observable.from_(self._src.list_files(src_folder)) \
             .filter(lambda fileinfo: not fileinfo.name.lower() in dest_files) \
             .flat_map(lambda f: Observable.start(lambda: self._copy_file(src_folder.name, f), Scheduler.current_thread))
