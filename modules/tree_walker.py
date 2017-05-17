@@ -49,18 +49,22 @@ class TreeWalker(Walker):
         folders = Observable.from_(folderlist)
         if self._config.root_files:
            folders = folders.start_with(None) 
-        folders.subscribe(on_next=lambda folder: print(folder.name if folder else 'None'),
-            on_completed=lambda: self._print_summary(time.time() - start))
 
-        # files = folders.map(lambda folder: Observable.from_((fileinfo, folder) for fileinfo in self._storage.list_files(folder)))
-        # if self._config.list_sort:
-            # files.to_sorted_list(key_selector=lambda (fileinfo, folder): (folder.name if folder else '', fileinfo.name)) \
-                # .subscribe(on_next=lambda items: [self._print_file(folder, fileinfo) for fileinfo, folder in items],
-                    # on_completed=lambda: self._print_summary(time.time() - start))
-        # else:
-            # files.subscribe(on_next=lambda (fileinfo, folder): self._print_file(folder, fileinfo),
-                # on_completed=lambda: self._print_summary(time.time() - start))
+        folders \
+            .concat_map(lambda folder: self._print_folder(folder)) \
+            .subscribe(on_next=lambda x: print("on_next: {}".format(x)),
+                on_completed=lambda: self._print_summary(time.time() - start))
 
+    def _print_folder(self, folder):
+        fileList = self._storage.list_files(folder)
+        if self._config.list_sort:
+            fileList = sorted(fileList, key=lambda x: x.name)
+        return Observable.just(folder) \
+            .do_action(lambda folder: print(folder.name) if folder else None) \
+            .flat_map(lambda folder: Observable.from_(fileList)) \
+            .scan(lambda acc, f: print(f.name))
+
+    '''
     def _print_file(self, folder, fileinfo):
         print("{}{}{}".format(UNICODE_LEAF, fileinfo.name, fileinfo.checksum or ''))
 
@@ -116,6 +120,7 @@ class TreeWalker(Walker):
 
     def _format_leaf(self, text, is_last):
         return (UNICODE_LAST_LEAF if is_last else UNICODE_LEAF) + text
+    '''
 
     def _print_summary(self, elapsed):
         print("{} directories, {} files{} read in {} sec".format(self._folder_count, self._file_count,
