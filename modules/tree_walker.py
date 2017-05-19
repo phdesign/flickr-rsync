@@ -50,19 +50,42 @@ class TreeWalker(Walker):
         if self._config.root_files:
            folders = folders.start_with(None) 
 
-        folders \
-            .concat_map(lambda folder: self._print_folder(folder)) \
-            .subscribe(on_next=lambda x: print("on_next: {}".format(x)),
-                on_completed=lambda: self._print_summary(time.time() - start))
+        def scan(acc, folder):
+            print("{}, {}".format(acc, folder))
+            acc.concat(self._print_folder(folder))
+            return folder
 
-    def _print_folder(self, folder):
+        folders = folders.publish().auto_connect(2)
+        last = folders \
+            .take_last(1) \
+            .map(lambda f: (f, True))
+        folders \
+            .skip_last(1) \
+            .map(lambda f: (f, False)) \
+            .merge(last) \
+            .concat_map(lambda (f, is_last): self._print_folder(f, is_last)) \
+            .ignore_elements() \
+            .subscribe(on_completed=lambda: self._print_summary(time.time() - start))
+
+    def _print_folder(self, folder, is_last):
         fileList = self._storage.list_files(folder)
         if self._config.list_sort:
             fileList = sorted(fileList, key=lambda x: x.name)
-        return Observable.just(folder) \
-            .do_action(lambda folder: print(folder.name) if folder else None) \
+
+        def scan(acc, f):
+            print("+    {}".format(acc.name))
+            return f
+
+        source = Observable.just(folder) \
+            .do_action(lambda folder: print("{} {}".format("-" if is_last else "+", folder.name)) if folder else None) \
             .flat_map(lambda folder: Observable.from_(fileList)) \
-            .scan(lambda acc, f: print(f.name))
+            .publish() \
+            .auto_connect(2)
+        source \
+            .scan(scan) \
+            .last() \
+            .subscribe(lambda f: print("-    {}".format(f.name)))
+        return source
 
     '''
     def _print_file(self, folder, fileinfo):
