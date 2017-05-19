@@ -15,7 +15,7 @@ class FakeStorage(Storage):
         FakeStorage.fake_count += 1
 
     def list_folders(self):
-        folder_count = 2
+        folder_count = 3
         for i in range(folder_count):
             name = '{}{} Folder'.format(self.prefix, self._get_char(i, folder_count))
             yield self._intense_calculation(FolderInfo(id=i, name=name))
