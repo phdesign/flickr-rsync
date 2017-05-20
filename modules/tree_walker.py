@@ -69,12 +69,13 @@ class TreeWalker(Walker):
 
         files = Observable.from_(fileList).publish().auto_connect(2)
         last = files \
-            .take_last(1) \
-            .do_action(lambda f: self._print_file(f, True, is_last))
+            .last() \
+            .map(lambda f: (f, True))
         files = files \
-            .skip_last(1) \
-            .do_action(lambda f: self._print_file(f, False, is_last)) \
-            .merge(last)
+            .pairwise() \
+            .map(lambda (f, b): (f, False)) \
+            .merge(last) \
+            .do_action(lambda (f, is_last_file): self._print_file(f, is_last_file, is_last, folder == None)) \
 
         return Observable.just(folder) \
             .do_action(lambda folder: self._print_folder(folder, is_last) if folder else None) \
@@ -83,12 +84,21 @@ class TreeWalker(Walker):
     def _print_folder(self, folder, is_last):
         print("{}{}".format(UNICODE_LAST_LEAF if is_last else UNICODE_LEAF, folder.name))
 
-    def _print_file(self, fileinfo, is_last_file, is_last_folder):
-        print("{}{}{}{}".format(
-            UNICODE_LAST_BRANCH if is_last_folder else UNICODE_BRANCH,
-            UNICODE_LAST_LEAF if is_last_file else UNICODE_LEAF,
-            fileinfo.name,
+    def _print_file(self, fileinfo, is_last_file, is_last_folder, is_root_folder):
+        folder_prefix = ''
+        if not is_root_folder:
+            if is_last_folder:
+                folder_prefix = UNICODE_LAST_BRANCH
+            else:
+                folder_prefix = UNICODE_BRANCH
+        file_prefix = UNICODE_LEAF
+        if is_last_file and (not is_root_folder or is_last_folder):
+            file_prefix = UNICODE_LAST_LEAF
+
+        print("{}{}{}{}".format(folder_prefix, file_prefix, fileinfo.name,
             " [{:.6}]".format(fileinfo.checksum) if fileinfo.checksum else ''))
+        if is_last_file and not is_last_folder:
+            print(UNICODE_BRANCH)
 
     '''
     def _walk(self):
