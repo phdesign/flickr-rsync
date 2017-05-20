@@ -52,11 +52,11 @@ class TreeWalker(Walker):
 
         folders = folders.publish().auto_connect(2)
         last = folders \
-            .take_last(1) \
+            .last() \
             .map(lambda f: (f, True))
         folders \
-            .skip_last(1) \
-            .map(lambda f: (f, False)) \
+            .pairwise() \
+            .map(lambda (f, b): (f, False)) \
             .merge(last) \
             .concat_map(lambda (f, is_last): self._walk_folder(f, is_last)) \
             .ignore_elements() \
