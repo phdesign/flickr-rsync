@@ -50,17 +50,28 @@ class TreeWalker(Walker):
         if self._config.root_files:
            folders = folders.start_with(None) 
 
-        folders = folders.publish().auto_connect(2)
+        folders = folders.publish().auto_connect(3)
+        folders.count().subscribe(lambda n: print("folders: {}".format(n)))
         last = folders \
             .last() \
             .map(lambda f: (f, True))
-        folders \
+        source = folders \
             .pairwise() \
             .map(lambda (f, b): (f, False)) \
             .merge(last) \
             .concat_map(lambda (f, is_last): self._walk_folder(f, is_last)) \
-            .ignore_elements() \
-            .subscribe(on_completed=lambda: self._print_summary(time.time() - start))
+            .publish() \
+            .auto_connect(2)
+        source \
+            .filter(lambda x: 'file' in x) \
+            .subscribe(lambda x: self._print_file(x['file'], x['is_last_file'], x['is_last_folder'], x['is_root_folder']))
+        source \
+            .filter(lambda x: 'folder' in x and x['folder']) \
+            .subscribe(lambda x: self._print_folder(x['folder'], x['is_last_folder']))
+            # .count() \
+            # .subscribe(lambda n: print("files: {}".format(n)))
+            # .ignore_elements() \
+            # .subscribe(on_completed=lambda: self._print_summary(time.time() - start))
 
     def _walk_folder(self, folder, is_last):
         fileList = self._storage.list_files(folder)
@@ -70,16 +81,28 @@ class TreeWalker(Walker):
         files = Observable.from_(fileList).publish().auto_connect(2)
         last = files \
             .last() \
-            .map(lambda f: (f, True))
+            .map(lambda f: { 
+                'file': f,
+                'is_last_file': True,
+                'is_last_folder': is_last,
+                'is_root_folder': folder == None
+            })
         files = files \
             .pairwise() \
-            .map(lambda (f, b): (f, False)) \
-            .merge(last) \
-            .do_action(lambda (f, is_last_file): self._print_file(f, is_last_file, is_last, folder == None)) \
+            .map(lambda (f, b): { 
+                'file': f,
+                'is_last_file': False,
+                'is_last_folder': is_last,
+                'is_root_folder': folder == None
+            }) \
+            .merge(last)
 
         return Observable.just(folder) \
-            .do_action(lambda folder: self._print_folder(folder, is_last) if folder else None) \
-            .flat_map(lambda folder: files)
+            .map(lambda f: { 
+                'folder': f,
+                'is_last_folder': is_last
+            }) \
+            .merge(files)
 
     def _print_folder(self, folder, is_last):
         print("{}{}".format(UNICODE_LAST_LEAF if is_last else UNICODE_LEAF, folder.name))
