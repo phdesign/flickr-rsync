@@ -50,10 +50,9 @@ class TreeWalker(Walker):
         if self._config.root_files:
            folders = folders.start_with(None) 
 
-        folders = folders.publish().auto_connect(3)
-        folders.count().subscribe(lambda n: print("folders: {}".format(n)))
+        folders = folders.publish().auto_connect(2)
         last = folders \
-            .last() \
+            .take_last(1) \
             .map(lambda f: (f, True))
         source = folders \
             .pairwise() \
@@ -61,13 +60,22 @@ class TreeWalker(Walker):
             .merge(last) \
             .concat_map(lambda (f, is_last): self._walk_folder(f, is_last)) \
             .publish() \
-            .auto_connect(2)
+            .auto_connect(3)
         source \
             .filter(lambda x: 'file' in x) \
             .subscribe(lambda x: self._print_file(x['file'], x['is_last_file'], x['is_last_folder'], x['is_root_folder']))
         source \
             .filter(lambda x: 'folder' in x and x['folder']) \
             .subscribe(lambda x: self._print_folder(x['folder'], x['is_last_folder']))
+        folder_count = source \
+            .count(lambda x: 'folder' in x and x['folder'])
+        hidden_folder_count = source \
+            .count(lambda x: 'folder' in x and x['folder'] == None)
+        file_count = source \
+            .count(lambda x: 'file' in x) \
+            .zip(folder_count, hidden_folder_count, lambda nfiles, nfolders, nhidden: (nfiles, nfolders, nhidden)) \
+            .subscribe(lambda (nfiles, nfolders, nhidden): self._print_summary(time.time() - start, nfiles, nfolders, nhidden))
+
             # .count() \
             # .subscribe(lambda n: print("files: {}".format(n)))
             # .ignore_elements() \
@@ -80,7 +88,7 @@ class TreeWalker(Walker):
 
         files = Observable.from_(fileList).publish().auto_connect(2)
         last = files \
-            .last() \
+            .take_last(1) \
             .map(lambda f: { 
                 'file': f,
                 'is_last_file': True,
@@ -102,7 +110,7 @@ class TreeWalker(Walker):
                 'folder': f,
                 'is_last_folder': is_last
             }) \
-            .merge(files)
+            .concat(files)
 
     def _print_folder(self, folder, is_last):
         print("{}{}".format(UNICODE_LAST_LEAF if is_last else UNICODE_LEAF, folder.name))
@@ -178,7 +186,7 @@ class TreeWalker(Walker):
         return (UNICODE_LAST_LEAF if is_last else UNICODE_LEAF) + text
     '''
 
-    def _print_summary(self, elapsed):
-        print("{} directories, {} files{} read in {} sec".format(self._folder_count, self._file_count,
-            " (excluding {} empty directories)".format(self._hidden_folder_count) if self._hidden_folder_count > 0 else "",
+    def _print_summary(self, elapsed, file_count, folder_count, hidden_folder_count):
+        print("{} directories, {} files{} read in {} sec".format(folder_count, file_count,
+            " (excluding {} empty directories)".format(hidden_folder_count) if hidden_folder_count > 0 else "",
             round(elapsed, 2)))

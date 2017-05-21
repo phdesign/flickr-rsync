@@ -21,6 +21,8 @@ class FakeStorage(Storage):
             yield self._intense_calculation(FolderInfo(id=i, name=name))
 
     def list_files(self, folder):
+        if folder and folder.name == 'B Folder':
+            return
         file_count = 4
         for i in range(file_count):
             name = '{}{} File'.format(self.prefix, self._get_char(i, file_count))
