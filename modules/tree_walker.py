@@ -36,9 +36,6 @@ class TreeWalker(Walker):
     def __init__(self, config, storage):
         self._config = config
         self._storage = storage
-        self._file_count = 0
-        self._hidden_folder_count = 0
-        self._folder_count = 0
 
     def walk(self):
         start = time.time()
@@ -117,61 +114,6 @@ class TreeWalker(Walker):
             " [{:.6}]".format(file.checksum) if file.checksum else ''))
         if is_last_file and not is_last_folder:
             print(UNICODE_BRANCH)
-
-    '''
-    def _walk(self):
-        start = time.time()
-        folders = self._storage.list_folders()
-        if self._config.list_sort:
-            folders = sorted(folders, key=lambda x: x.name)
-        if self._config.root_files:
-            self._print_root_files(any(folders))
-        self._print_folders(folders)
-
-        self._print_summary(time.time() - start)
-
-    def _print_root_files(self, has_folders):
-        files = self._storage.list_files(None)
-        if self._config.list_sort:
-            files = sorted(files, key=lambda x: x.name)
-        for x, has_next in enumerate_peek(files):
-            self._file_count += 1
-            print(self._format_leaf(
-                "{} [{:.6}]".format(x.name.encode('utf-8'), x.checksum) if x.checksum else x.name.encode('utf-8'), 
-                not has_next and not has_folders))
-
-    def _print_folders(self, folders):
-        is_first = True
-        for x, has_next in enumerate_peek(folders):
-            self._print_folder(x, is_first, not has_next) 
-            is_first = False
-
-    def _print_folder(self, folder, is_first, is_last):
-        files = self._storage.list_files(folder)
-        if self._config.list_sort:
-            files = sorted(files, key=lambda x: x.name)
-        if not any(files):
-            self._hidden_folder_count += 1
-            return
-        if is_first and self._file_count > 0:
-            print(UNICODE_BRANCH)
-        print(self._format_leaf(folder.name.encode('utf-8'), is_last))
-        self._folder_count += 1
-        prefix = UNICODE_LAST_BRANCH if is_last else UNICODE_BRANCH
-        self._print_files(prefix, files)
-        if not is_last:
-            print(UNICODE_BRANCH)
-    
-    def _print_files(self, prefix, files):
-        for x, has_next in enumerate_peek(files):
-            self._file_count += 1
-            print(prefix + self._format_leaf(
-                "{} [{:.6}]".format(x.name.encode('utf-8'), x.checksum) if x.checksum else x.name.encode('utf-8'), 
-                not has_next))
-
-    def _format_leaf(self, text, is_last):
-        return (UNICODE_LAST_LEAF if is_last else UNICODE_LEAF) + text
-    '''
 
     def _print_summary(self, elapsed, file_count, folder_count, hidden_folder_count):
         print("{} directories, {} files{} read in {} sec".format(folder_count, file_count,
