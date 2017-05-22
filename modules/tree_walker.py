@@ -46,76 +46,63 @@ class TreeWalker(Walker):
         folderlist = self._storage.list_folders()
         if self._config.list_sort:
             folderlist = sorted(folderlist, key=lambda x: x.name)
-        folders = Observable.from_(folderlist)
+        folders = Observable.from_(folderlist) \
+            .map(lambda f: { 'folder': f, 'is_root_folder': False })
         if self._config.root_files:
-           folders = folders.start_with(None) 
+            folders = folders.start_with({ 'folder': None, 'is_root_folder': True }) 
 
-        folders = folders.publish().auto_connect(2)
+        folders = folders.publish().auto_connect(3)
         last = folders \
             .take_last(1) \
-            .map(lambda f: (f, True))
+            .map(lambda x: dict(x, is_last_folder=True))
         source = folders \
             .pairwise() \
-            .map(lambda (f, b): (f, False)) \
+            .map(lambda (x, b): dict(x, is_last_folder=False)) \
             .merge(last) \
-            .concat_map(lambda (f, is_last): self._walk_folder(f, is_last)) \
-            .publish() \
-            .auto_connect(3)
-        source \
-            .filter(lambda x: 'file' in x) \
-            .subscribe(lambda x: self._print_file(x['file'], x['is_last_file'], x['is_last_folder'], x['is_root_folder']))
-        source \
-            .filter(lambda x: 'folder' in x and x['folder']) \
-            .subscribe(lambda x: self._print_folder(x['folder'], x['is_last_folder']))
-        folder_count = source \
-            .count(lambda x: 'folder' in x and x['folder'])
-        hidden_folder_count = source \
-            .count(lambda x: 'folder' in x and x['folder'] == None)
+            .concat_map(lambda x: self._walk_folder(x)) \
+            .publish()
+        all_folder_count = folders.count(self._not_root)
+        grouped = source \
+            .group_by(lambda x: x['folder'])
+        grouped.subscribe(self._walk_group)
+
+        shown_folder_count = grouped \
+            .flat_map(lambda g: g.first()) \
+            .count(self._not_root)
         file_count = source \
-            .count(lambda x: 'file' in x) \
-            .zip(folder_count, hidden_folder_count, lambda nfiles, nfolders, nhidden: (nfiles, nfolders, nhidden)) \
-            .subscribe(lambda (nfiles, nfolders, nhidden): self._print_summary(time.time() - start, nfiles, nfolders, nhidden))
+            .count() \
+            .zip(shown_folder_count, all_folder_count, lambda n_files, n_shown, n_all: (n_files, n_shown, n_all - n_shown)) \
+            .subscribe(lambda (n_files, n_shown, n_hidden): self._print_summary(time.time() - start, n_files, n_shown, n_hidden))
+        source.connect()
 
-            # .count() \
-            # .subscribe(lambda n: print("files: {}".format(n)))
-            # .ignore_elements() \
-            # .subscribe(on_completed=lambda: self._print_summary(time.time() - start))
+    def _not_root(self, x):
+        return x['is_root_folder'] == False
 
-    def _walk_folder(self, folder, is_last):
-        fileList = self._storage.list_files(folder)
+    def _walk_group(self, group):
+        group \
+            .first() \
+            .where(self._not_root) \
+            .subscribe(lambda x: self._print_folder(**x))
+        group.subscribe(lambda x: self._print_file(**x))
+
+    def _walk_folder(self, msg):
+        fileList = self._storage.list_files(msg['folder'])
         if self._config.list_sort:
             fileList = sorted(fileList, key=lambda x: x.name)
 
         files = Observable.from_(fileList).publish().auto_connect(2)
         last = files \
             .take_last(1) \
-            .map(lambda f: { 
-                'file': f,
-                'is_last_file': True,
-                'is_last_folder': is_last,
-                'is_root_folder': folder == None
-            })
-        files = files \
+            .map(lambda f: dict(msg, file=f, is_last_file=True))
+        return files \
             .pairwise() \
-            .map(lambda (f, b): { 
-                'file': f,
-                'is_last_file': False,
-                'is_last_folder': is_last,
-                'is_root_folder': folder == None
-            }) \
+            .map(lambda (f, b): dict(msg, file=f, is_last_file=False)) \
             .merge(last)
 
-        return Observable.just(folder) \
-            .map(lambda f: { 
-                'folder': f,
-                'is_last_folder': is_last
-            }) \
-            .concat(files)
+    def _print_folder(self, folder, is_last_folder, **kwargs):
+        print("{}{}".format(UNICODE_LAST_LEAF if is_last_folder else UNICODE_LEAF, folder.name))
 
-    def _print_folder(self, folder, is_last):
-        print("{}{}".format(UNICODE_LAST_LEAF if is_last else UNICODE_LEAF, folder.name))
-
-    def _print_file(self, fileinfo, is_last_file, is_last_folder, is_root_folder):
+    def _print_file(self, file, is_last_file, is_last_folder, is_root_folder, **kwargs):
         folder_prefix = ''
         if not is_root_folder:
             if is_last_folder:
@@ -126,8 +113,8 @@ class TreeWalker(Walker):
         if is_last_file and (not is_root_folder or is_last_folder):
             file_prefix = UNICODE_LAST_LEAF
 
-        print("{}{}{}{}".format(folder_prefix, file_prefix, fileinfo.name,
-            " [{:.6}]".format(fileinfo.checksum) if fileinfo.checksum else ''))
+        print("{}{}{}{}".format(folder_prefix, file_prefix, file.name,
+            " [{:.6}]".format(file.checksum) if file.checksum else ''))
         if is_last_file and not is_last_folder:
             print(UNICODE_BRANCH)
 
