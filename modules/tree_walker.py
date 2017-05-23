@@ -67,13 +67,13 @@ class TreeWalker(Walker):
         if self._config.root_files:
             folders = folders.start_with({ 'folder': None, 'is_root_folder': True }) 
 
-        all_folder_count = folders.count(self._not_root)
         files = is_last(folders) \
             .map(lambda (x, is_last): dict(x, is_last_folder=is_last)) \
             .concat_map(lambda x: self._walk_folder(x)) \
             .group_by(lambda x: x['folder']) \
             .subscribe(self._walk_group)
 
+        # all_folder_count = folders.count(self._not_root)
         # source = self._is_last(folders) \
             # .map(lambda (x, is_last): dict(x, is_last_folder=is_last)) \
             # .concat_map(lambda x: self._walk_folder(x)) \
@@ -96,19 +96,14 @@ class TreeWalker(Walker):
 
     def _walk_group(self, source):
         seen_value = [False]
+
         def on_next(x):
             if not seen_value[0] and self._not_root(x):
                 self._print_folder(**x)
             self._print_file(**x)
             seen_value[0] = True
-        source.subscribe(on_next)
 
-    def _walk_group_old(self, group):
-        group \
-            .first() \
-            .where(self._not_root) \
-            .subscribe(lambda x: self._print_folder(**x))
-        group.subscribe(lambda x: self._print_file(**x))
+        source.subscribe(on_next)
 
     def _walk_folder(self, msg):
         fileList = self._storage.list_files(msg['folder'])
