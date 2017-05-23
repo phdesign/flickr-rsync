@@ -67,29 +67,20 @@ class TreeWalker(Walker):
         if self._config.root_files:
             folders = folders.start_with({ 'folder': None, 'is_root_folder': True }) 
 
+        folders = folders.publish().auto_connect(2)
         files = is_last(folders) \
             .map(lambda (x, is_last): dict(x, is_last_folder=is_last)) \
-            .concat_map(lambda x: self._walk_folder(x)) \
-            .group_by(lambda x: x['folder']) \
-            .subscribe(self._walk_group)
+            .concat_map(lambda x: self._walk_folder(x))
+        groups = files.group_by(lambda x: x['folder'])
+        groups.subscribe(self._walk_group)
 
-        # all_folder_count = folders.count(self._not_root)
-        # source = self._is_last(folders) \
-            # .map(lambda (x, is_last): dict(x, is_last_folder=is_last)) \
-            # .concat_map(lambda x: self._walk_folder(x)) \
-            # .publish()
-        # grouped = source \
-            # .group_by(lambda x: x['folder'])
-        # grouped.subscribe(self._walk_group)
-
-        # shown_folder_count = grouped \
-            # .flat_map(lambda g: g.first()) \
-            # .count(self._not_root)
-        # file_count = source \
-            # .count() \
-            # .zip(shown_folder_count, all_folder_count, lambda n_files, n_shown, n_all: (n_files, n_shown, n_all - n_shown)) \
-            # .subscribe(lambda (n_files, n_shown, n_hidden): self._print_summary(time.time() - start, n_files, n_shown, n_hidden))
-        # source.connect()
+        all_folder_count = folders.count(self._not_root)
+        shown_folder_count = groups \
+            .flat_map(lambda g: g.first()) \
+            .count(self._not_root)
+        files.count() \
+            .zip(shown_folder_count, all_folder_count, lambda n_files, n_shown, n_all: (n_files, n_shown, n_all - n_shown)) \
+            .subscribe(lambda (n_files, n_shown, n_hidden): self._print_summary(time.time() - start, n_files, n_shown, n_hidden))
 
     def _not_root(self, x):
         return x['is_root_folder'] == False
