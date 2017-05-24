@@ -1,3 +1,6 @@
+from __future__ import print_function
+from mock import NonCallableMock 
+
 def setup_storage(storage, folders):
     """
     Fakes a folder / file configuration on a storage mock. Pass a None folder as the root folder.
@@ -15,3 +18,10 @@ def setup_storage(storage, folders):
     """
     storage.list_folders.return_value = [x['folder'] for x in folders if x['folder'] != None]
     storage.list_files.side_effect = lambda folder: next((x['files'] for x in folders if x['folder'] == folder), [])
+
+def assert_has_calls_exactly(mock, calls):
+    mock.assert_has_calls(calls)
+    if mock.call_count != len(calls):
+        raise AssertionError("Expected '{}' to be called {} times. Called {} times.".format(mock._mock_name, mock.call_count, len(calls)))
+
+NonCallableMock.assert_has_calls_exactly = assert_has_calls_exactly

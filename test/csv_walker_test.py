@@ -14,6 +14,8 @@ class CsvWalkerTest(unittest.TestCase):
     def setUp(self):
         self.print_patch = patch('modules.csv_walker.print', create=True)
         self.mock_print = self.print_patch.start()
+        self.time_patch = patch('modules.tree_walker.time.time', create=True)
+        self.time_patch.start().return_value = 0
 
         self.config = MagicMock()
         self.storage = MagicMock()
@@ -27,13 +29,17 @@ class CsvWalkerTest(unittest.TestCase):
 
     def tearDown(self):
         self.print_patch.stop()
+        self.time_patch.stop()
 
     def test_should_print_header_only_given_no_folders(self):
         walker = CsvWalker(self.config, self.storage)
 
         walker.walk()
 
-        self.mock_print.assert_called_once_with("Folder, Filename, Checksum")
+        self.mock_print.assert_has_calls_exactly([
+            call("Folder, Filename, Checksum"),
+            call("\ndone in 0.0 sec")
+        ])
 
     def test_should_print_header_only_given_empty_folders(self):
         walker = CsvWalker(self.config, self.storage)
@@ -44,7 +50,10 @@ class CsvWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_called_once_with("Folder, Filename, Checksum")
+        self.mock_print.assert_has_calls_exactly([
+            call("Folder, Filename, Checksum"),
+            call("\ndone in 0.0 sec")
+        ])
 
     def test_should_print_root_files_given_root_files_enabled(self):
         walker = CsvWalker(self.config, self.storage)
@@ -54,12 +63,12 @@ class CsvWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_has_calls([
+        self.mock_print.assert_has_calls_exactly([
             call("Folder, Filename, Checksum"),
             call(", A File, None"),
-            call(", B File, None")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 3)
+            call(", B File, None"),
+            call("\ndone in 0.0 sec")
+        ])
 
     def test_should_not_print_root_files_given_root_files_disabled(self):
         self.config.root_files = False
@@ -70,7 +79,10 @@ class CsvWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_called_once_with("Folder, Filename, Checksum")
+        self.mock_print.assert_has_calls_exactly([
+            call("Folder, Filename, Checksum"),
+            call("\ndone in 0.0 sec")
+        ])
 
     def test_should_print_folder_files(self):
         walker = CsvWalker(self.config, self.storage)
@@ -80,12 +92,12 @@ class CsvWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_has_calls([
+        self.mock_print.assert_has_calls_exactly([
             call("Folder, Filename, Checksum"),
             call("A Folder, A File, None"),
-            call("A Folder, B File, None")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 3)
+            call("A Folder, B File, None"),
+            call("\ndone in 0.0 sec")
+        ])
 
     def test_should_print_all_folders(self):
         walker = CsvWalker(self.config, self.storage)
@@ -96,12 +108,12 @@ class CsvWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_has_calls([
+        self.mock_print.assert_has_calls_exactly([
             call("Folder, Filename, Checksum"),
             call("A Folder, A File, None"),
-            call("B Folder, B File, None")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 3)
+            call("B Folder, B File, None"),
+            call("\ndone in 0.0 sec")
+        ])
 
     def test_should_print_checksum_given_file_has_checksum(self):
         walker = CsvWalker(self.config, self.storage)
@@ -111,11 +123,11 @@ class CsvWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_has_calls([
+        self.mock_print.assert_has_calls_exactly([
             call("Folder, Filename, Checksum"),
-            call("A Folder, C File, abc123")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 2)
+            call("A Folder, C File, abc123"),
+            call("\ndone in 0.0 sec")
+        ])
 
     def test_should_sort_folders_and_files_given_sort_enabled(self):
         self.config.list_sort = True
@@ -127,13 +139,13 @@ class CsvWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_has_calls([
+        self.mock_print.assert_has_calls_exactly([
             call("Folder, Filename, Checksum"),
             call("A Folder, A File, None"),
             call("B Folder, B File, None"),
-            call("B Folder, C File, abc123")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 4)
+            call("B Folder, C File, abc123"),
+            call("\ndone in 0.0 sec")
+        ])
 
     def test_should_not_sort_folders_and_files_given_sort_disabled(self):
         self.config.list_sort = False
@@ -145,13 +157,13 @@ class CsvWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_has_calls([
+        self.mock_print.assert_has_calls_exactly([
             call("Folder, Filename, Checksum"),
             call("B Folder, C File, abc123"),
             call("B Folder, B File, None"),
-            call("A Folder, A File, None")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 4)
+            call("A Folder, A File, None"),
+            call("\ndone in 0.0 sec")
+        ])
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

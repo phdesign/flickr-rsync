@@ -6,42 +6,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../libs')
 from mock import MagicMock, patch, call
 import helpers
 import modules.tree_walker
-from modules.tree_walker import enumerate_peek, TreeWalker
+from modules.tree_walker import TreeWalker
 from modules.file_info import FileInfo
 from modules.folder_info import FolderInfo
-
-class EnumeratePeekTest(unittest.TestCase):
-
-    def test_should_return_empty_iterator_given_empty_iterator(self):
-        mock_generator = iter(())
-        was_called = False
-        for x, has_next in enumerate_peek(mock_generator):
-            was_called = True
-        self.assertFalse(was_called, "Expected no enumeration of empty iterator")
-
-    def test_has_next_should_return_true_given_more_items_exist(self):
-        mock_generator = iter(range(2))
-        x, has_next = next(enumerate_peek(mock_generator))
-        self.assertTrue(has_next)
-
-    def test_has_next_should_return_false_given_no_more_items_exist(self):
-        mock_generator = iter(range(1))
-        x, has_next = next(enumerate_peek(mock_generator))
-        self.assertFalse(has_next)
-
-    def test_should_iterate_over_all_items_given_iterator(self):
-        mock_generator = iter(range(3))
-        call_count = 0
-        for x, has_next in enumerate_peek(mock_generator):
-            call_count += 1
-        self.assertEqual(call_count, 3)
-
-    def test_should_iterate_over_all_items_given_list(self):
-        my_list = [1,2,3]
-        call_count = 0
-        for x, has_next in enumerate_peek(my_list):
-            call_count += 1
-        self.assertEqual(call_count, 3)
 
 class TreeWalkerTest(unittest.TestCase):
 
@@ -91,12 +58,11 @@ class TreeWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_has_calls([
+        self.mock_print.assert_has_calls_exactly([
             call(u"├─── A File".encode('utf-8')),
             call(u"└─── B File".encode('utf-8')),
             call("0 directories, 2 files read in 0.0 sec")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 3)
+        ])
 
     @unittest.skip("Ligitimately broken, I just don't have a good fix for it")
     def test_should_not_print_connector_when_printing_root_files_given_folders_are_hidden(self):
@@ -108,12 +74,11 @@ class TreeWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_has_calls([
+        self.mock_print.assert_has_calls_exactly([
             call(u"├─── A File".encode('utf-8')),
             call(u"└─── B File".encode('utf-8')),
             call("0 directories, 2 files (excluding 1 empty directories) read in 0.0 sec")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 3)
+        ])
 
     def test_should_not_print_root_files_given_root_files_disabled(self):
         self.config.root_files = False
@@ -139,8 +104,7 @@ class TreeWalkerTest(unittest.TestCase):
             call(u"    ├─── A File".encode('utf-8')),
             call(u"    └─── B File".encode('utf-8')),
             call("1 directories, 2 files read in 0.0 sec")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 4)
+        ])
 
     def test_should_print_all_folders(self):
         walker = TreeWalker(self.config, self.storage)
@@ -158,8 +122,7 @@ class TreeWalkerTest(unittest.TestCase):
             call(u"└─── B Folder".encode('utf-8')),
             call(u"    └─── B File".encode('utf-8')),
             call("2 directories, 2 files read in 0.0 sec")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 6)
+        ])
 
     def test_should_print_checksum_given_file_has_checksum(self):
         walker = TreeWalker(self.config, self.storage)
@@ -173,8 +136,7 @@ class TreeWalkerTest(unittest.TestCase):
             call(u"└─── A Folder".encode('utf-8')),
             call(u"    └─── C File [abc123]".encode('utf-8')),
             call("1 directories, 1 files read in 0.0 sec")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 3)
+        ])
 
     def test_should_sort_folders_and_files_given_sort_enabled(self):
         self.config.list_sort = True
@@ -194,8 +156,7 @@ class TreeWalkerTest(unittest.TestCase):
             call(u"    ├─── B File".encode('utf-8')),
             call(u"    └─── C File [abc123]".encode('utf-8')),
             call("2 directories, 3 files read in 0.0 sec")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 7)
+        ])
 
     def test_should_not_sort_folders_and_files_given_sort_disabled(self):
         self.config.list_sort = False
@@ -215,8 +176,7 @@ class TreeWalkerTest(unittest.TestCase):
             call(u"└─── A Folder".encode('utf-8')),
             call(u"    └─── A File".encode('utf-8')),
             call("2 directories, 3 files read in 0.0 sec")
-        ], any_order=False)
-        self.assertEqual(self.mock_print.call_count, 7)
+        ])
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
