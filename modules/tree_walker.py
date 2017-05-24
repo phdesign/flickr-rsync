@@ -4,51 +4,12 @@ import operator
 import time
 from walker import Walker
 from rx import Observable, AnonymousObservable
+from is_last import is_last
 
 UNICODE_LEAF = u"├─── ".encode('utf-8')
 UNICODE_LAST_LEAF = u"└─── ".encode('utf-8')
 UNICODE_BRANCH = u"│   ".encode('utf-8')
 UNICODE_LAST_BRANCH = "    "
-
-def enumerate_peek(items):
-    """
-    Wraps an iterator or sequence of items, returning a each item and a flag indicating if there are more items to come
-
-    Args:
-        items: An iterator or sequence of items
-
-    Returns:
-        A tuple (item, has_next) where has_next indicates there are more items
-    """
-    iterator = iter(items)
-    current = next(iterator)
-    while True:
-        try:
-            next_item = next(iterator)
-            yield (current, True)
-            current = next_item
-        except StopIteration:
-            yield (current, False)
-            return
-
-def is_last(source):
-    def subscribe(observer):
-        value = [None]
-        seen_value = [False]
-
-        def on_next(x):
-            if seen_value[0]:
-                observer.on_next((value[0], False))
-            value[0] = x
-            seen_value[0] = True
-
-        def on_completed():
-            if seen_value[0]:
-                observer.on_next((value[0], True))
-            observer.on_completed()
-
-        return source.subscribe(on_next, observer.on_error, on_completed)
-    return AnonymousObservable(subscribe)
 
 class TreeWalker(Walker):
     
@@ -68,7 +29,7 @@ class TreeWalker(Walker):
             folders = folders.start_with({ 'folder': None, 'is_root_folder': True }) 
 
         folders = folders.publish().auto_connect(2)
-        files = is_last(folders) \
+        files = folders.is_last() \
             .map(lambda (x, is_last): dict(x, is_last_folder=is_last)) \
             .concat_map(lambda x: self._walk_folder(x))
         groups = files.group_by(lambda x: x['folder'])
@@ -101,7 +62,7 @@ class TreeWalker(Walker):
         if self._config.list_sort:
             fileList = sorted(fileList, key=lambda x: x.name)
 
-        return is_last(Observable.from_(fileList)) \
+        return Observable.from_(fileList).is_last() \
             .map(lambda (f, is_last): dict(msg, file=f, is_last_file=is_last))
 
     def _print_folder(self, folder, is_last_folder, **kwargs):
