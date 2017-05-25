@@ -20,6 +20,7 @@ class TreeWalker(Walker):
     def walk(self):
         start = time.time()
 
+        # Create source stream with folder message items
         folderlist = self._storage.list_folders()
         if self._config.list_sort:
             folderlist = sorted(folderlist, key=lambda x: x.name)
@@ -28,13 +29,16 @@ class TreeWalker(Walker):
         if self._config.root_files:
             folders = folders.start_with({ 'folder': None, 'is_root_folder': True }) 
 
+        # Expand folder messages into file messages
         folders = folders.publish().auto_connect(2)
         files = folders.is_last() \
             .map(lambda (x, is_last): dict(x, is_last_folder=is_last)) \
             .concat_map(lambda x: self._walk_folder(x))
+        # Group by folder but still provide a file stream within each group
         groups = files.group_by(lambda x: x['folder'])
         groups.subscribe(self._walk_group)
 
+        # Gather counts and print summary
         all_folder_count = folders.count(self._not_root)
         shown_folder_count = groups \
             .flat_map(lambda g: g.first()) \

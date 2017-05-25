@@ -14,10 +14,13 @@ class CsvWalker(Walker):
         start = time.time()
         print("Folder, Filename, Checksum")
 
+        # Create source stream
         folders = Observable.from_(self._storage.list_folders())
         if self._config.root_files:
            folders = folders.start_with(None) 
+        # Expand folder stream into file stream
         files = folders.concat_map(lambda folder: Observable.from_((fileinfo, folder) for fileinfo in self._storage.list_files(folder)))
+        # Print each file
         if self._config.list_sort:
             files.to_sorted_list(key_selector=lambda (fileinfo, folder): (folder.name if folder else '', fileinfo.name)) \
                 .subscribe(on_next=lambda items: [self._print_file(folder, fileinfo) for fileinfo, folder in items],

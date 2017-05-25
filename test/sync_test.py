@@ -49,6 +49,7 @@ class SyncTest(SyncTestBase):
 
         self.mock.assert_not_called()
 
+'''
 # @unittest.skip("")
 class SyncCopyTest(SyncTestBase):
 
@@ -174,6 +175,7 @@ class SyncMergeTest(SyncTestBase):
         self.sync.run()
         
         self.mock.assert_not_called()
+'''
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

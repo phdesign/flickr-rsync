@@ -62,3 +62,4 @@ python flickr-syncp.py flickr --exclude-dir '.*' --root-files --list-only
 * Allow search?
 * If no API key, list flickr URL to signup
 * Webpage for successfullFlickr login
+* Use a RootFolderInfo instead of None for root folder
