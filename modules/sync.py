@@ -4,42 +4,10 @@ import operator
 import time
 from threading import current_thread
 from rx import Observable, AnonymousObservable
-from rx.concurrency import ThreadPoolScheduler
 from verbose import vprint
 from rx.internal import extensionmethod
 
 @extensionmethod(Observable)
-def concat_with_buffer(self, other):
-    source = self
-
-    def subscribe(observer):
-        queue = []
-        self_has_completed = False
-        other_has_completed = False
-
-        def on_other_next(item):
-            if self_has_completed:
-                observer.on_next(item)
-            else:
-                queue.append(item)
-
-        def on_completed():
-            for item in queue:
-                observer.on_next(item)
-            if other_has_completed:
-                observer.on_completed()
-            self_has_completed = True
-
-        def on_other_completed():
-            if self_has_completed:
-                observer.on_completed()
-            other_has_completed = True
-
-        other.subscribe(on_other_next, observer.on_error, on_other_completed)
-        return source.subscribe(observer.on_next, observer.on_error, on_completed)
-
-    return AnonymousObservable(subscribe)
-
 def when_complete(self):
     source = self
 
@@ -65,7 +33,6 @@ class Sync(object):
         print("building folder list...")
         start = time.time()
 
-        pool_scheduler = ThreadPoolScheduler(4)
         dest_folders = {folder.name.lower(): folder for folder in self._dest.list_folders()}
         # Create folder stream
         src_folders = Observable.from_(self._src.list_folders()) \
@@ -77,7 +44,7 @@ class Sync(object):
         to_merge = src_folders.filter(lambda x: x['dest'] != None)
         if self._config.root_files:
             to_merge = to_merge.start_with({ 'src': None, 'dest': None })
-        to_merge = to_merge.buffer(lambda: when_complete(src_folders)).flat_map(lambda x: x)
+        to_merge = to_merge.buffer(lambda: src_folders.when_complete()).flat_map(lambda x: x)
 
         # Concat streams so copy operations happen first
         pending = to_copy \
@@ -85,7 +52,6 @@ class Sync(object):
             .flat_map(lambda x: self._expand_folder(**x)) \
             .publish().auto_connect(2)
         pending \
-            .observe_on(pool_scheduler) \
             .subscribe(lambda x: self._copy_file(x['folder'] and x['folder'].name, x['file']))
 
         # Count files, print summary
