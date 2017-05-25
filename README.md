@@ -65,9 +65,48 @@ Folder, Filename, Checksum
 
 ## Syncing files
 
+e.g. To copy all files from Flickr to a local folder
+
+```
+$ flickr-rsync flickr ~/Pictures/flickr
+```
+
+Or to copy all files from a local folder up to Flickr	
+
+```
+$ flickr-rsync ~/Pictures/flickr flickr
+```
+
+You can even copy from a local folder to another local folder
+
+```
+$ flickr-rsync ~/Pictures/from ~/Pictures/to
+```
+
+Files are matched by folder names and file names. E.g. if you have a Flickr photoset called `2017-04-16 Easter Camping` and a file called `IMG_2517.jpg`, and you are trying to copy from a folder with `2017-04-16 Easter Camping\IMG_2517.jpg` it will assume this file is the same and will not try to copy it.
+
+### Will never delete!
+
+`flickr-rsync` will never delete any files, either from Flickr or your local system, it is append only. It will not overwrite any files either, if a file with the same name exists in the same photoset / folder, it will be skipped.
+
 ## Filtering
 
-### Options
+Filtering is done using regular expressions. The following four options control filtering the files:
+
+* `--include=` specifies a pattern that **file paths** must match to be included in the operation
+* `--include-dir=` specifies a pattern that **folder names** must match to be included in the operation
+* `--exclude=` specifies a pattern that **file paths** must NOT match to be included in the operation
+* `--exclude-dir=` specifies a pattern that **folder names** must NOT match to be included in the operation
+
+Note that filtering by folders is more performant than by file paths, prefer folder name filtering where possible.
+
+Also note that exclude filters take preference and will override include filters.
+
+### Root files
+
+Note that filtering does not apply to root files, root files (files in the target folder if local file system, or files not in a photoset on Flickr) are excluded by default. To include them, use `--root-files`.
+
+## Options
 
 All options can be provided by either editing the `flickr-rsync.ini` file or using the command line interface.
 
@@ -96,7 +135,8 @@ optional arguments:
                         output or CSV
   --list-sort           sort alphabetically when --list-only, note that this
                         forces buffering of remote sources so will be slower
-  --include REGEX       include only files matching REGEX
+  --include REGEX       include only files matching REGEX. Defaults to
+                        "\.(jpg|png|avi|mov|mpg|mp4|3gp)$"
   --include-dir REGEX   include only directories matching REGEX
   --exclude REGEX       exclude any files matching REGEX, note this takes
                         precedent over --include

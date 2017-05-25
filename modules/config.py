@@ -57,7 +57,7 @@ class Config(object):
         parser.add_argument('--list-sort', action='store_true',
                             help='sort alphabetically when --list-only, note that this forces buffering of remote sources so will be slower')
         parser.add_argument('--include', type=str, metavar='REGEX',
-                            help='include only files matching REGEX')
+                            help='include only files matching REGEX. Defaults to "\.(jpg|png|avi|mov|mpg|mp4|3gp)$"')
         parser.add_argument('--include-dir', type=str, metavar='REGEX',
                             help='include only directories matching REGEX ')
         parser.add_argument('--exclude', type=str, metavar='REGEX',
