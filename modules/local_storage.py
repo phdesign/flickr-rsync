@@ -59,7 +59,8 @@ class LocalStorage(Storage):
         if isinstance(dest_storage, RemoteStorage):
             dest_storage.upload(src, folder_name, file_info.name, file_info.checksum)
         else:
-            dest = os.path.join(dest_storage.path, folder_name, file_info.name)
+            relative_path = os.path.join(folder_name, file_info.name) if folder_name != None else file_info.name
+            dest = os.path.join(dest_storage.path, relative_path)
             mkdirp(dest)
             shutil.copyfile(src, dest)
 

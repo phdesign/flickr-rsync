@@ -19,6 +19,7 @@ class SyncTestBase(unittest.TestCase):
 
         self.config = MagicMock()
         self.config.dry_run = False
+        self.config.root_files = True
         self.src_storage = MagicMock()
         self.dest_storage = MagicMock()
         self.folder_one = FolderInfo(id=1, name='A')
@@ -173,6 +174,20 @@ class SyncMergeTest(SyncTestBase):
         self.sync.run()
         
         self.mock.assert_not_called()
+
+    def test_should_merge_files_in_root_folder_given_root_files_enabled(self):
+        helpers.setup_storage(self.src_storage, [
+            { 'folder': None, 'files': [self.file_one, self.file_two] },
+        ])
+        helpers.setup_storage(self.dest_storage, [
+            { 'folder': None, 'files': [self.file_two] },
+        ])
+
+        self.sync.run()
+
+        self.mock.assert_has_calls_exactly([
+            call(self.file_one, None, self.dest_storage),
+        ], any_order=True)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
