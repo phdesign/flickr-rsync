@@ -1,38 +1,78 @@
-# flickr-syncp
+# flickr-rsync
 
-A python script to manage synchronising a local directory of photos with flickr based on an rsync interaction pattern
+> Its like rsync for Flickr!
+
+A python script to manage synchronising a local directory of photos with Flickr based on an rsync interaction pattern.
 
 ## Installation
 
 Run the following to install dependencies locally within the package directory
 ```
-pip install flickr_api --target ./libs
+$ make init
 ```
 
-## Running from config
+## Listing files
 
-Edit the `flickr-syncp.ini` file.
+The `--list-only` flag will print a list of files in the source storage provider, this can either be Flickr by specifying the `src` as `Flickr` or a local file system path. Use `--sort-files` to sort the files alphabetically. This feature is useful for manually creating a diff between your local files and Flickr files.
 
-Run the flickr-syncp.py file, e.g.
+e.g. List all files in Flickr photo sets
+
 ```
-python flickr-syncp.py
+$ flickr-rsync flickr --list-only
 ```
 
-## Running from CLI
-```
-# Listing files
-python flickr-syncp.py --mode list --src flickr --include .* --include-dir .* --exclude \.gitignore --exclude-dir \.git
+Or List all files in a local folder
 
-# Copying files
-python flickr-syncp.py --mode sync --src /Users/paul/Pictures/Uploadr/ --dest flickr
-
-# To list just root files
-python flickr-syncp.py flickr --exclude-dir '.*' --root-files --list-only
 ```
+$ flickr-rsync ~/Pictures --list-only
+```
+
+### Tree view vs. csv view
+
+You can change the output from a tree view to a comma separated values view by using `--list-format=tree` or `--list-format=csv`. By default the tree view is used.
+
+e.g. Print in tree format
+
+```
+$ flickr-rsync flickr --list-only --list-format=tree
+
+├─── 2017-04-24 Family Holiday
+│   ├─── IMG_2546.jpg [70ebf9]
+│   ├─── IMG_2547.jpg [3d3046]
+│   ├─── IMG_2548.jpg [2f2385]
+│   └─── IMG_2549.jpg [d8e946]
+│   
+└─── 2017-04-16 Easter Camping
+    ├─── IMG_2515.jpg [aabe74]
+    ├─── IMG_2516.jpg [0eb4f2]
+    └─── IMG_2517.jpg [4fe908]
+```
+
+Or csv format
+
+```
+$ flickr-rsync flickr --list-only --list-format=csv
+
+Folder, Filename, Checksum
+2017-04-24 Family Holiday, IMG_2546.jpg, 70ebf9be4d8301e94c65582977332754
+2017-04-24 Family Holiday, IMG_2547.jpg, 3d3046b37ba338793a762ab7bd83e85c
+2017-04-24 Family Holiday, IMG_2548.jpg, 2f23853abeb742551043a3514ba4315b
+2017-04-24 Family Holiday, IMG_2549.jpg, d8e946e73700b9c2890d3681c3c0fa0b
+2017-04-16 Easter Camping, IMG_2515.jpg, aabe74b06c3a53e801893347eb6bd7f5
+2017-04-16 Easter Camping, IMG_2516.jpg, 0eb4f2519f6562ff66069618637a7b10
+2017-04-16 Easter Camping, IMG_2517.jpg, 4fe9085b9f320a67988f84e85338a3ff
+```
+
+## Syncing files
+
+## Filtering
 
 ### Options
+
+All options can be provided by either editing the `flickr-rsync.ini` file or using the command line interface.
+
 ```
-usage: flickr-syncp [-h] [-l] [--list-format {tree,csv}] [--list-sort]
+usage: flickr-rsync [-h] [-l] [--list-format {tree,csv}] [--list-sort]
                     [--include REGEX] [--include-dir REGEX] [--exclude REGEX]
                     [--exclude-dir REGEX] [--root-files] [-n]
                     [--throttling SEC] [--retry NUM] [--api-key API_KEY]
@@ -79,10 +119,27 @@ optional arguments:
   --version             show program's version number and exit
 ```
 
+## Running tests
+
+```
+$ make test
+```
+Or
+```
+$ python -m unittest discover -s test -p '*_test.py'
+```
+
+## Tips
+
+To list just root files only:
+```
+$ flickr-rsync flickr --exclude-dir '.*' --root-files --list-only
+```
+
 ## TODO
 
 * Handle nested directories (merge with separator)
-* --add-checksum-ta*g (Add checksumto all files)
+* --add-checksum-tag (Add checksumto all files)
 * --list-duplicates
 * Copy local files / add to multiple albums if checksum equal. (How to deal with same file different names)
 * Multi-threading

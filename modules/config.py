@@ -26,7 +26,7 @@ DEFAULTS = {
     'retry': 7,
     'api_key': '',
     'api_secret': '',
-    'tags': 'flickr-syncp',
+    'tags': 'flickr-rsync',
     'is_public': 0,
     'is_friend': 0,
     'is_family': 0,
@@ -45,7 +45,7 @@ class Config(object):
         return getattr(self._args, name)
 
     def read(self):
-        parser = argparse.ArgumentParser(description='A python script to manage synchronising a local directory of photos to flickr', prog='flickr-syncp')
+        parser = argparse.ArgumentParser(description='A python script to manage synchronising a local directory of photos to flickr', prog='flickr-rsync')
         parser.add_argument('src', type=str, nargs='?', 
                             help='the source directory to copy or list files from, or FLICKR to specify flickr')
         parser.add_argument('dest', type=str, nargs='?', 
