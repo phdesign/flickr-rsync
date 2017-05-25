@@ -4,7 +4,7 @@ import operator
 import time
 from threading import current_thread
 from rx import Observable, AnonymousObservable
-from rx.core import Scheduler
+from rx.concurrency import ThreadPoolScheduler
 from verbose import vprint
 from rx.internal import extensionmethod
 
@@ -65,6 +65,7 @@ class Sync(object):
         print("building folder list...")
         start = time.time()
 
+        pool_scheduler = ThreadPoolScheduler(4)
         dest_folders = {folder.name.lower(): folder for folder in self._dest.list_folders()}
         # Create folder stream
         src_folders = Observable.from_(self._src.list_folders()) \
@@ -83,7 +84,9 @@ class Sync(object):
             .merge(to_merge) \
             .flat_map(lambda x: self._expand_folder(**x)) \
             .publish().auto_connect(2)
-        pending.subscribe(lambda x: self._copy_file(x['folder'] and x['folder'].name, x['file']))
+        pending \
+            .observe_on(pool_scheduler) \
+            .subscribe(lambda x: self._copy_file(x['folder'] and x['folder'].name, x['file']))
 
         # Count files, print summary
         pending \
