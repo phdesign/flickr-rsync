@@ -4,12 +4,32 @@ import operator
 import time
 from walker import Walker
 from rx import Observable, AnonymousObservable
-from is_last import is_last
+from rx.internal import extensionmethod
 
 UNICODE_LEAF = u"├─── ".encode('utf-8')
 UNICODE_LAST_LEAF = u"└─── ".encode('utf-8')
 UNICODE_BRANCH = u"│   ".encode('utf-8')
 UNICODE_LAST_BRANCH = "    "
+
+@extensionmethod(Observable)
+def is_last(source):
+    def subscribe(observer):
+        value = [None]
+        seen_value = [False]
+
+        def on_next(x):
+            if seen_value[0]:
+                observer.on_next((value[0], False))
+            value[0] = x
+            seen_value[0] = True
+
+        def on_completed():
+            if seen_value[0]:
+                observer.on_next((value[0], True))
+            observer.on_completed()
+
+        return source.subscribe(on_next, observer.on_error, on_completed)
+    return AnonymousObservable(subscribe)
 
 class TreeWalker(Walker):
     

@@ -91,6 +91,24 @@ class TreeWalkerTest(unittest.TestCase):
 
         self.mock_print.assert_called_once_with("0 directories, 0 files read in 0.0 sec")
 
+    def test_should_print_root_files_given_root_files_enabled_and_folders_exist(self):
+        self.config.list_sort = False
+        walker = TreeWalker(self.config, self.storage)
+        helpers.setup_storage(self.storage, [
+            { 'folder': None, 'files': [self.file_three] },
+            { 'folder': self.folder_one, 'files': [self.file_one] }
+        ])
+
+        walker.walk()
+
+        self.mock_print.assert_has_calls([
+            call(u"├─── C File [abc123]".encode('utf-8')),
+            call(u"│   ".encode('utf-8')),
+            call(u"└─── A Folder".encode('utf-8')),
+            call(u"    └─── A File".encode('utf-8')),
+            call("1 directories, 2 files read in 0.0 sec")
+        ])
+
     def test_should_print_folder_files(self):
         walker = TreeWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
