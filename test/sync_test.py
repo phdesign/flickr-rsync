@@ -14,6 +14,8 @@ class SyncTestBase(unittest.TestCase):
     def setUp(self):
         self.print_patch = patch('modules.sync.print')
         self.mock_print = self.print_patch.start()
+        self.vprint_patch = patch('modules.sync.vprint', create=True)
+        self.mock_vprint = self.vprint_patch.start()
 
         self.config = MagicMock()
         self.config.dry_run = False
@@ -32,6 +34,7 @@ class SyncTestBase(unittest.TestCase):
 
     def tearDown(self):
         self.print_patch.stop()
+        self.vprint_patch.stop()
 
 class SyncTest(SyncTestBase):
 
@@ -49,7 +52,6 @@ class SyncTest(SyncTestBase):
 
         self.mock.assert_not_called()
 
-'''
 # @unittest.skip("")
 class SyncCopyTest(SyncTestBase):
 
@@ -66,12 +68,11 @@ class SyncCopyTest(SyncTestBase):
 
         self.sync.run()
 
-        self.mock.assert_has_calls([
+        self.mock.assert_has_calls_exactly([
             call(self.file_one, self.folder_one.name, self.dest_storage),
             call(self.file_one, self.folder_two.name, self.dest_storage),
             call(self.file_one, self.folder_three.name, self.dest_storage)
         ], any_order=True)
-        self.assertEqual(self.mock.call_count, 3)
 
     def test_should_copy_folder_for_each_missing_folder_given_some_exist_already(self):
         helpers.setup_storage(self.src_storage, [
@@ -87,11 +88,10 @@ class SyncCopyTest(SyncTestBase):
 
         self.sync.run()
 
-        self.mock.assert_has_calls([
+        self.mock.assert_has_calls_exactly([
             call(self.file_one, self.folder_one.name, self.dest_storage),
             call(self.file_one, self.folder_two.name, self.dest_storage)
         ], any_order=True)
-        self.assertEqual(self.mock.call_count, 2)
 
     def test_should_not_copy_folder_given_all_exist_already(self):
         helpers.setup_storage(self.src_storage, [
@@ -124,11 +124,10 @@ class SyncMergeTest(SyncTestBase):
 
         self.sync.run()
         
-        self.mock.assert_has_calls([
+        self.mock.assert_has_calls_exactly([
             call(self.file_one, self.folder_one.name, self.dest_storage),
             call(self.file_two, self.folder_one.name, self.dest_storage)
         ], any_order=True)
-        self.assertEqual(self.mock.call_count, 2)
 
     def test_should_copy_missing_files_from_all_folders(self):
         helpers.setup_storage(self.src_storage, [
@@ -142,11 +141,10 @@ class SyncMergeTest(SyncTestBase):
 
         self.sync.run()
         
-        self.mock.assert_has_calls([
+        self.mock.assert_has_calls_exactly([
             call(self.file_one, self.folder_one.name, self.dest_storage),
             call(self.file_two, self.folder_two.name, self.dest_storage)
         ], any_order=True)
-        self.assertEqual(self.mock.call_count, 2)
 
     def test_should_copy_missing_files_in_existing_folder_given_files_exist(self):
         helpers.setup_storage(self.src_storage, [{
@@ -175,7 +173,6 @@ class SyncMergeTest(SyncTestBase):
         self.sync.run()
         
         self.mock.assert_not_called()
-'''
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

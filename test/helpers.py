@@ -19,8 +19,8 @@ def setup_storage(storage, folders):
     storage.list_folders.return_value = [x['folder'] for x in folders if x['folder'] != None]
     storage.list_files.side_effect = lambda folder: next((x['files'] for x in folders if x['folder'] == folder), [])
 
-def assert_has_calls_exactly(mock, calls):
-    mock.assert_has_calls(calls)
+def assert_has_calls_exactly(mock, calls, any_order=False):
+    mock.assert_has_calls(calls, any_order=any_order)
     if mock.call_count != len(calls):
         raise AssertionError("Expected '{}' to be called {} times. Called {} times.".format(mock._mock_name, mock.call_count, len(calls)))
 

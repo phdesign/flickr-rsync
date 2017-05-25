@@ -66,7 +66,7 @@ class Sync(object):
         dest_files = [f.name.lower() for f in self._dest.list_files(dest)] if is_merging else []
         source = Observable.from_(self._src.list_files(src))
         if is_merging:
-            source.filter(lambda f: not f.name.lower() in dest_files)
+            source = source.filter(lambda f: not f.name.lower() in dest_files)
         return source.map(lambda f: { 'folder': src, 'file': f })
 
     def _copy_file(self, folder_name, fileinfo):
