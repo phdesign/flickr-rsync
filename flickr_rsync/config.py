@@ -1,6 +1,5 @@
 from __future__ import print_function
-import os
-import __main__
+import os, sys
 import ConfigParser
 import argparse
 from distutils.util import strtobool
@@ -8,7 +7,7 @@ from _version import __version__
 
 __packagename__ = 'flickr-rsync'
 
-CONFIG_FILENAME = ".{}.ini".format(__packagename__)
+CONFIG_FILENAME = __packagename__ + '.ini'
 
 FILES_SECTION = 'Files'
 FLICKR_SECTION = 'Flickr'
@@ -38,13 +37,28 @@ DEFAULTS = {
     'verbose': False
 }
 
-def find_config_file(filename):
-    # Look in executing foler
-    # Look in user home folder
-    # Look in python package folder
-    ret = os.path.join(os.path.split(os.path.abspath(__main__.__file__))[0], filename)
-    print("using {}".format(ret))
-    return ret
+
+def locate(filename):
+    def file_locations(filename):
+        # Look in working directory
+        yield os.path.join(os.getcwd(), filename)
+        yield os.path.join(os.getcwd(), '.' + filename)
+        # Look in user home folder
+        yield os.path.join(os.path.expanduser('~'), filename)
+        yield os.path.join(os.path.expanduser('~'), '.' + filename)
+        # Look in executable folder
+        yield os.path.join(os.path.realpath(sys.argv[0]), filename)
+        yield os.path.join(os.path.realpath(sys.argv[0]), '.' + filename)
+        # Look in script file folder
+        yield os.path.join(os.path.split(os.path.abspath(__file__))[0], filename)
+        yield os.path.join(os.path.split(os.path.abspath(__file__))[0], '.' + filename)
+
+    for path_to_test in file_locations(filename):
+        print("looking for {}".format(path_to_test))
+        if os.path.isfile(path_to_test):
+            return path_to_test
+
+    return None # TODO: handle None returns
 
 class Config(object):
 
@@ -99,7 +113,7 @@ class Config(object):
 
     def _read_ini(self):
         config = ConfigParser.SafeConfigParser()
-        ini_path = find_config_file(CONFIG_FILENAME)
+        ini_path = locate(CONFIG_FILENAME)
         config.read(ini_path)
 
         options = DEFAULTS.copy()
