@@ -50,10 +50,11 @@ def locate(filename):
         yield os.path.join(os.path.realpath(sys.argv[0]), filename)
         yield os.path.join(os.path.realpath(sys.argv[0]), '.' + filename)
         # Look in script file folder
-        yield os.path.join(os.path.split(os.path.abspath(__file__))[0], filename)
-        yield os.path.join(os.path.split(os.path.abspath(__file__))[0], '.' + filename)
+        # yield os.path.join(os.path.split(os.path.abspath(__file__))[0], filename)
+        # yield os.path.join(os.path.split(os.path.abspath(__file__))[0], '.' + filename)
 
     for path_to_test in file_locations(filename):
+        # TODO: Remove print. Move ini file to project root
         print("looking for {}".format(path_to_test))
         if os.path.isfile(path_to_test):
             return path_to_test
