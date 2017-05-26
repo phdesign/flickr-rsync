@@ -178,7 +178,7 @@ class FlickrStorage(RemoteStorage):
         flickr_api.set_keys(api_key = self._config.api_key, api_secret = self._config.api_secret)
 
         token_path = locate(TOKEN_FILENAME)
-        if os.path.isfile(token_path):
+        if token_path:
            auth_handler = flickr_api.auth.AuthHandler.load(token_path) 
 
         else:

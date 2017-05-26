@@ -46,7 +46,7 @@ def main():
             sync.run()
 
     except urllib2.URLError as e:
-        print("Error connecting to server. " + e)
+        print("Error connecting to server. {}".format(e))
         sys.exit()
     except KeyboardInterrupt:
         sys.exit()

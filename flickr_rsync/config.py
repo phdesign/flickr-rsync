@@ -54,12 +54,10 @@ def locate(filename):
         # yield os.path.join(os.path.split(os.path.abspath(__file__))[0], '.' + filename)
 
     for path_to_test in file_locations(filename):
-        # TODO: Remove print. Move ini file to project root
-        print("looking for {}".format(path_to_test))
         if os.path.isfile(path_to_test):
             return path_to_test
 
-    return None # TODO: handle None returns
+    return None
 
 class Config(object):
 
@@ -113,15 +111,17 @@ class Config(object):
         self._args = parser.parse_args()
 
     def _read_ini(self):
+        options = DEFAULTS.copy()
         config = ConfigParser.SafeConfigParser()
         ini_path = locate(CONFIG_FILENAME)
-        config.read(ini_path)
 
-        options = DEFAULTS.copy()
-        self._read_files_section(config, options)
-        self._read_network_section(config, options)
-        self._read_options_section(config, options)
-        self._read_flickr_section(config, options)
+        if ini_path:
+            config.read(ini_path)
+            self._read_files_section(config, options)
+            self._read_network_section(config, options)
+            self._read_options_section(config, options)
+            self._read_flickr_section(config, options)
+
         return options
 
     def _read_options_section(self, config, options):
