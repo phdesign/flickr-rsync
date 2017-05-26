@@ -42,7 +42,9 @@ def find_config_file(filename):
     # Look in executing foler
     # Look in user home folder
     # Look in python package folder
-    return os.path.join(os.path.split(os.path.abspath(__main__.__file__))[0], filename)
+    ret = os.path.join(os.path.split(os.path.abspath(__main__.__file__))[0], filename)
+    print("using {}".format(ret))
+    return ret
 
 class Config(object):
 
@@ -94,7 +96,6 @@ class Config(object):
         parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
         parser.set_defaults(**self._read_ini())
         self._args = parser.parse_args()
-        print("{}".format(dict(self._args)))
 
     def _read_ini(self):
         config = ConfigParser.SafeConfigParser()

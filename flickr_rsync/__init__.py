@@ -31,7 +31,6 @@ def _get_walker(config, storage, list_format):
         raise ValueError('Unrecognised value for list-format: {}'.format(list_format))
 
 def main():
-    print('here')
     try:
         config = Config()
         config.read()
