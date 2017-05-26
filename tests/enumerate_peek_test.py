@@ -2,9 +2,8 @@
 import os, sys
 import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/..')
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../libs')
 import helpers
-from modules.enumerate_peek import enumerate_peek
+from flickr_rsync.enumerate_peek import enumerate_peek
 
 class EnumeratePeekTest(unittest.TestCase):
 

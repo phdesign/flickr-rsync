@@ -6,9 +6,23 @@ A python script to manage synchronising a local directory of photos with Flickr 
 
 ## Installation
 
-Run the following to install dependencies locally within the package directory
+Run the following to install flickr-rsync globally
 ```
-$ make init
+$ python setup.py install
+```
+
+Alternatively use virtualenv
+
+```
+$ virtualenv <path>
+$ source <path>/bin/activate
+$ python setup.py install
+```
+
+Then when you're done
+
+```
+deactivate
 ```
 
 ## Listing files
@@ -159,14 +173,21 @@ optional arguments:
   --version             show program's version number and exit
 ```
 
+## Debugging
+
+```
+$ pip install -e .
+$ python flickr_rsync
+```
+
 ## Running tests
 
 ```
-$ make test
+$ python setup.py test -q
 ```
 Or
 ```
-$ python -m unittest discover -s test -p '*_test.py'
+$ python -m unittest discover -s tests -p '*_test.py'
 ```
 
 ## Tips

@@ -78,7 +78,7 @@ class Sync(object):
     def _copy_file(self, folder, file, path, **kwargs):
         print(path)
         if not self._config.dry_run:
-            self._src.copy_file(file, folder.name, self._dest)
+            self._src.copy_file(file, folder and folder.name, self._dest)
         vprint("{}...copied [{}]".format(path, current_thread().name))
 
     def _print_summary(self, elapsed, files_copied, files_skipped):

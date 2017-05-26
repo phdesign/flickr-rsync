@@ -1,20 +1,18 @@
 import os, sys
 import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/..')
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../libs')
 from mock import MagicMock, patch, call
 import helpers
-import modules.csv_walker
-from modules.csv_walker import CsvWalker
-from modules.file_info import FileInfo
-from modules.folder_info import FolderInfo
+from flickr_rsync.csv_walker import CsvWalker
+from flickr_rsync.file_info import FileInfo
+from flickr_rsync.folder_info import FolderInfo
 
 class CsvWalkerTest(unittest.TestCase):
 
     def setUp(self):
-        self.print_patch = patch('modules.csv_walker.print', create=True)
+        self.print_patch = patch('flickr_rsync.csv_walker.print', create=True)
         self.mock_print = self.print_patch.start()
-        self.time_patch = patch('modules.tree_walker.time.time', create=True)
+        self.time_patch = patch('flickr_rsync.tree_walker.time.time', create=True)
         self.time_patch.start().return_value = 0
 
         self.config = MagicMock()
@@ -165,6 +163,6 @@ class CsvWalkerTest(unittest.TestCase):
             call("\ndone in 0.0 sec")
         ])
 
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
+# if __name__ == '__main__':
+    # unittest.main(verbosity=2)
 

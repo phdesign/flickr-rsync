@@ -13,7 +13,7 @@ from file_info import FileInfo
 from folder_info import FolderInfo
 from local_storage import mkdirp
 
-TOKEN_FILENAME = '.flickrToken'
+TOKEN_FILENAME = 'flickr.token'
 CHECKSUM_PREFIX = 'checksum:md5'
 OAUTH_PERMISSIONS = 'write'
 

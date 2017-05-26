@@ -4,6 +4,11 @@ import __main__
 import ConfigParser
 import argparse
 from distutils.util import strtobool
+from _version import __version__
+
+__packagename__ = 'flickr-rsync'
+
+CONFIG_FILENAME = __packagename__ + '.ini'
 
 FILES_SECTION = 'Files'
 FLICKR_SECTION = 'Flickr'
@@ -26,7 +31,7 @@ DEFAULTS = {
     'retry': 7,
     'api_key': '',
     'api_secret': '',
-    'tags': 'flickr-rsync',
+    'tags': __packagename__,
     'is_public': 0,
     'is_friend': 0,
     'is_family': 0,
@@ -45,7 +50,7 @@ class Config(object):
         return getattr(self._args, name)
 
     def read(self):
-        parser = argparse.ArgumentParser(description='A python script to manage synchronising a local directory of photos to flickr', prog='flickr-rsync')
+        parser = argparse.ArgumentParser(description='A python script to manage synchronising a local directory of photos to flickr', prog=__packagename__)
         parser.add_argument('src', type=str, nargs='?', 
                             help='the source directory to copy or list files from, or FLICKR to specify flickr')
         parser.add_argument('dest', type=str, nargs='?', 
@@ -80,13 +85,13 @@ class Config(object):
                             help='space seperated list of tags to apply to uploaded files on flickr')
         parser.add_argument('-v', '--verbose', action='store_true',
                             help='increase verbosity')
-        parser.add_argument('--version', action='version', version='%(prog)s 0.1')
+        parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
         parser.set_defaults(**self._read_ini())
         self._args = parser.parse_args()
 
     def _read_ini(self):
         config = ConfigParser.SafeConfigParser()
-        ini_path = os.path.splitext(os.path.abspath(__main__.__file__))[0] + '.ini'
+        ini_path = os.path.join(os.path.split(os.path.abspath(__main__.__file__))[0], CONFIG_FILENAME)
         config.read(ini_path)
 
         options = DEFAULTS.copy()

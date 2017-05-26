@@ -1,4 +1,8 @@
-libs
-.flickrToken
+build/
+dist/
+flickr.token
 *.pyc
 .DS_Store
+/flickr_rsync.egg-info
+*.egg
+.eggs

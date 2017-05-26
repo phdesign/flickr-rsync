@@ -1,20 +1,19 @@
 import os, sys
 import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/..')
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../libs')
 from mock import MagicMock, patch, call
 import helpers
-import modules.sync
-from modules.sync import Sync
-from modules.file_info import FileInfo
-from modules.folder_info import FolderInfo
+import flickr_rsync.sync
+from flickr_rsync.sync import Sync
+from flickr_rsync.file_info import FileInfo
+from flickr_rsync.folder_info import FolderInfo
 
 class SyncTestBase(unittest.TestCase):
 
     def setUp(self):
-        self.print_patch = patch('modules.sync.print')
+        self.print_patch = patch('flickr_rsync.sync.print')
         self.mock_print = self.print_patch.start()
-        self.vprint_patch = patch('modules.sync.vprint', create=True)
+        self.vprint_patch = patch('flickr_rsync.sync.vprint', create=True)
         self.mock_vprint = self.vprint_patch.start()
 
         self.config = MagicMock()

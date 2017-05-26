@@ -1,19 +1,16 @@
-#!/usr/bin/env python
 from __future__ import print_function
 import os, sys
 import urllib2
 
-# Load third party dependencies, check in /libs folder if you've installed them there
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/libs')
-import modules.verbose as verbose
-from modules.storage import Storage
-from modules.config import Config
-from modules.sync import Sync
-from modules.flickr_storage import FlickrStorage
-from modules.local_storage import LocalStorage
-from modules.fake_storage import FakeStorage
-from modules.tree_walker import TreeWalker
-from modules.csv_walker import CsvWalker
+import verbose as verbose
+from storage import Storage
+from config import Config
+from sync import Sync
+from flickr_storage import FlickrStorage
+from local_storage import LocalStorage
+from fake_storage import FakeStorage
+from tree_walker import TreeWalker
+from csv_walker import CsvWalker
 
 def _get_storage(config, path):
     if path.lower() == Config.PATH_FLICKR:
@@ -30,7 +27,7 @@ def _get_walker(config, storage, list_format):
     else:
         raise ValueError('Unrecognised value for list-format: {}'.format(list_format))
 
-if __name__ == "__main__":
+def main():
     try:
         config = Config()
         config.read()
