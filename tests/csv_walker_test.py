@@ -1,6 +1,7 @@
 import os, sys
 import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/..')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../libs')
 from mock import MagicMock, patch, call
 import helpers
 from flickr_rsync.csv_walker import CsvWalker
@@ -163,6 +164,6 @@ class CsvWalkerTest(unittest.TestCase):
             call("\ndone in 0.0 sec")
         ])
 
-# if __name__ == '__main__':
-    # unittest.main(verbosity=2)
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
 

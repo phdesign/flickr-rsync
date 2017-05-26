@@ -2,6 +2,7 @@
 import os, sys
 import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/..')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../libs')
 import helpers
 from flickr_rsync.enumerate_peek import enumerate_peek
 

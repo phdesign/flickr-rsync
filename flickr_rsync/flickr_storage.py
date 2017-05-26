@@ -12,8 +12,9 @@ from flickr_api.api import flickr
 from file_info import FileInfo
 from folder_info import FolderInfo
 from local_storage import mkdirp
+from config import __packagename__, find_config_file
 
-TOKEN_FILENAME = 'flickr.token'
+TOKEN_FILENAME = ".{}.token".format(__packagename__)
 CHECKSUM_PREFIX = 'checksum:md5'
 OAUTH_PERMISSIONS = 'write'
 
@@ -175,9 +176,11 @@ class FlickrStorage(RemoteStorage):
         if self._is_authenticated:
             return
 
+        print("api_key: {}".format(api_key))
         flickr_api.set_keys(api_key = self._config.api_key, api_secret = self._config.api_secret)
 
-        token_path = os.path.join(os.path.split(os.path.abspath(__main__.__file__))[0], TOKEN_FILENAME)
+        token_path = find_config_file(TOKEN_FILENAME)
+        print("token_path: {}".format(token_path))
         if os.path.isfile(token_path):
            auth_handler = flickr_api.auth.AuthHandler.load(token_path) 
 

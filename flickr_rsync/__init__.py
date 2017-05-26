@@ -2,6 +2,9 @@ from __future__ import print_function
 import os, sys
 import urllib2
 
+# Load third party dependencies, check in /libs folder if you've installed them there
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '../libs')
+
 import verbose as verbose
 from storage import Storage
 from config import Config
@@ -28,6 +31,7 @@ def _get_walker(config, storage, list_format):
         raise ValueError('Unrecognised value for list-format: {}'.format(list_format))
 
 def main():
+    print('here')
     try:
         config = Config()
         config.read()
@@ -42,8 +46,8 @@ def main():
             sync = Sync(config, src_storage, dest_storage)
             sync.run()
 
-    except urllib2.URLError:
-        print("Network connection interrupted")
+    except urllib2.URLError as e:
+        print("Error connecting to server. " + e)
         sys.exit()
     except KeyboardInterrupt:
         sys.exit()

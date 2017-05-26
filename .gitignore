@@ -1,8 +1,11 @@
 build/
 dist/
-flickr.token
+libs/
+
+.flickr-rsync.token
 *.pyc
 .DS_Store
+
 /flickr_rsync.egg-info
 *.egg
 .eggs

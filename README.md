@@ -19,6 +19,13 @@ $ source <path>/bin/activate
 $ python setup.py install
 ```
 
+Or to run standalone
+
+```
+$ make init
+$ python flickr_rsync <options>
+```
+
 Then when you're done
 
 ```
@@ -209,3 +216,5 @@ $ flickr-rsync flickr --exclude-dir '.*' --root-files --list-only
 * If no API key, list flickr URL to signup
 * Webpage for successfullFlickr login
 * Use a RootFolderInfo instead of None for root folder
+* Verbose treeview prints empty folders
+* setup.py tests isn't working (can't install mock)
