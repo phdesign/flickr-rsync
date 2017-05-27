@@ -124,7 +124,7 @@ Note that filtering does not apply to root files, root files (files in the targe
 
 ## Options
 
-All options can be provided by either editing the `flickr-rsync.ini` file or using the command line interface.
+All options can be provided by either editing the config file `flickr-rsync.ini` or using the command line interface.
 
 ```
 usage: flickr-rsync [-h] [-l] [--list-format {tree,csv}] [--list-sort]
@@ -174,6 +174,16 @@ optional arguments:
   -v, --verbose         increase verbosity
   --version             show program's version number and exit
 ```
+
+### Config and token file discovery
+
+The config file `flickr-rsync.ini` and Flickr token file `flickr-rsync.token` are searched for in the following locations in order:
+1. <current working dir>/flickr-rsync.ini
+2. <current working dir>/.flickr-rsync***.ini
+3. <users home dir>/flickr-rsync.ini
+4. <users home dir>/.flickr-rsync.ini
+5. <executable dir>/flickr-rsync.ini
+6. <executable dir>/.flickr-rsync.ini
 
 ## Running tests
 
