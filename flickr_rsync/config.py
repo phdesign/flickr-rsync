@@ -37,28 +37,6 @@ DEFAULTS = {
     'verbose': False
 }
 
-
-def locate(filename):
-    def file_locations(filename):
-        # Look in working directory
-        yield os.path.join(os.getcwd(), filename)
-        yield os.path.join(os.getcwd(), '.' + filename)
-        # Look in user home folder
-        yield os.path.join(os.path.expanduser('~'), filename)
-        yield os.path.join(os.path.expanduser('~'), '.' + filename)
-        # Look in executable folder
-        yield os.path.join(os.path.realpath(sys.argv[0]), filename)
-        yield os.path.join(os.path.realpath(sys.argv[0]), '.' + filename)
-        # Look in script file folder
-        # yield os.path.join(os.path.split(os.path.abspath(__file__))[0], filename)
-        # yield os.path.join(os.path.split(os.path.abspath(__file__))[0], '.' + filename)
-
-    for path_to_test in file_locations(filename):
-        if os.path.isfile(path_to_test):
-            return path_to_test
-
-    return None
-
 class Config(object):
 
     LIST_FORMAT_TREE = 'tree'
@@ -109,14 +87,41 @@ class Config(object):
         parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
         parser.set_defaults(**self._read_ini())
         self._args = parser.parse_args()
+        
+        if self.verbose:
+            if self._ini_path:
+                print("using config file {}".format(self._ini_path))
+            else:
+                print("no config file found")
+
+    def locate_datafile(self, filename):
+        def file_locations(filename):
+            # Look in working directory
+            yield os.path.join(os.getcwd(), filename)
+            yield os.path.join(os.getcwd(), '.' + filename)
+            # Look in user home folder
+            yield os.path.join(os.path.expanduser('~'), filename)
+            yield os.path.join(os.path.expanduser('~'), '.' + filename)
+            # Look in executable folder
+            yield os.path.join(os.path.realpath(sys.argv[0]), filename)
+            yield os.path.join(os.path.realpath(sys.argv[0]), '.' + filename)
+
+        for path_to_test in file_locations(filename):
+            if os.path.isfile(path_to_test):
+                return path_to_test
+
+        return None
+
+    def default_datafile(self, filename):
+        return os.path.join(os.path.expanduser('~'), '.' + filename)
 
     def _read_ini(self):
         options = DEFAULTS.copy()
         config = ConfigParser.SafeConfigParser()
-        ini_path = locate(CONFIG_FILENAME)
+        self._ini_path = self.locate_datafile(CONFIG_FILENAME)
 
-        if ini_path:
-            config.read(ini_path)
+        if self._ini_path:
+            config.read(self._ini_path)
             self._read_files_section(config, options)
             self._read_network_section(config, options)
             self._read_options_section(config, options)

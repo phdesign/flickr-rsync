@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os
+import os, sys
 import re
 import webbrowser
 import time
@@ -11,7 +11,7 @@ from flickr_api.api import flickr
 from file_info import FileInfo
 from folder_info import FolderInfo
 from local_storage import mkdirp
-from config import __packagename__, locate
+from config import __packagename__
 
 TOKEN_FILENAME = __packagename__ + '.token'
 CHECKSUM_PREFIX = 'checksum:md5'
@@ -177,11 +177,12 @@ class FlickrStorage(RemoteStorage):
 
         flickr_api.set_keys(api_key = self._config.api_key, api_secret = self._config.api_secret)
 
-        token_path = locate(TOKEN_FILENAME)
+        token_path = self._config.locate_datafile(TOKEN_FILENAME)
         if token_path:
            auth_handler = flickr_api.auth.AuthHandler.load(token_path) 
 
         else:
+            token_path = self._config.default_datafile(TOKEN_FILENAME)
             auth_handler = flickr_api.auth.AuthHandler()
             permissions_requested = OAUTH_PERMISSIONS
             url = auth_handler.get_authorization_url(permissions_requested)
@@ -191,7 +192,12 @@ class FlickrStorage(RemoteStorage):
             auth_handler.set_verifier(verifier_code)
             auth_handler.save(token_path)
 
-        flickr_api.set_auth_handler(auth_handler)
-        self._user = flickr_api.test.login()
-        self._is_authenticated = True
+        try:
+            flickr_api.set_auth_handler(auth_handler)
+            self._user = flickr_api.test.login()
+            self._is_authenticated = True
+
+        except flickr_api.flickrerrors.FlickrError as e:
+            print(e.message)
+            sys.exit(1);
 

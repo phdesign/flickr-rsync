@@ -47,6 +47,6 @@ def main():
 
     except urllib2.URLError as e:
         print("Error connecting to server. {}".format(e))
-        sys.exit()
+        sys.exit(1)
     except KeyboardInterrupt:
         sys.exit()
