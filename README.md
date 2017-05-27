@@ -11,25 +11,20 @@ Run the following to install flickr-rsync globally
 $ python setup.py install
 ```
 
-Alternatively use virtualenv
-
+Or in development mode so source files are symlinked
 ```
-$ virtualenv <path>
-$ source <path>/bin/activate
-$ python setup.py install
+$ python setup.py develop
+
+# Then to uninstall
+$ python setup.py develop --uninstall
 ```
 
-Or to run standalone
-
+Alternatively, install dependencies in project folder
 ```
 $ make init
+
+# Run with
 $ python flickr_rsync <options>
-```
-
-Then when you're done
-
-```
-deactivate
 ```
 
 ## Listing files
@@ -178,13 +173,6 @@ optional arguments:
                         files on flickr
   -v, --verbose         increase verbosity
   --version             show program's version number and exit
-```
-
-## Debugging
-
-```
-$ pip install -e .
-$ python flickr_rsync
 ```
 
 ## Running tests
