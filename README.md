@@ -178,12 +178,12 @@ optional arguments:
 ### Config and token file discovery
 
 The config file `flickr-rsync.ini` and Flickr token file `flickr-rsync.token` are searched for in the following locations in order:
-1. <current working dir>/flickr-rsync.ini
-2. <current working dir>/.flickr-rsync***.ini
-3. <users home dir>/flickr-rsync.ini
-4. <users home dir>/.flickr-rsync.ini
-5. <executable dir>/flickr-rsync.ini
-6. <executable dir>/.flickr-rsync.ini
+* `<current working dir>/flickr-rsync.ini`
+* `<current working dir>/.flickr-rsync.ini`
+* `<users home dir>/flickr-rsync.ini`
+* `<users home dir>/.flickr-rsync.ini`
+* `<executable dir>/flickr-rsync.ini`
+* `<executable dir>/.flickr-rsync.ini`
 
 ## Running tests
 
@@ -194,6 +194,10 @@ Or
 ```
 $ python -m unittest discover -s tests -p '*_test.py'
 ```
+Or
+```
+$ make test
+```
 
 ## Tips
 
@@ -201,6 +205,21 @@ To list just root files only:
 ```
 $ flickr-rsync flickr --exclude-dir '.*' --root-files --list-only
 ```
+
+## Troubleshooting
+
+If you're running Mac OSX El Capitan and you get the following error when running `python setup.py test`
+```
+pkg_resources.VersionConflict: (six 1.4.1 (/System/Library/Frameworks/Python.fra
+mework/Versions/2.7/Extras/lib/python), Requirement.parse('six>=1.9'))
+```
+
+Do the following:
+```
+$ sudo pip install --ignore-installed six
+```
+
+More details [https://github.com/pypa/pip/issues/3165](https://github.com/pypa/pip/issues/3165)
 
 ## TODO
 
@@ -215,4 +234,3 @@ $ flickr-rsync flickr --exclude-dir '.*' --root-files --list-only
 * Webpage for successfullFlickr login
 * Use a RootFolderInfo instead of None for root folder
 * Verbose treeview prints empty folders
-* setup.py tests isn't working (can't install mock)
