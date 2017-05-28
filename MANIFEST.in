@@ -1,3 +1,4 @@
-include README.md
-include LICENSE.txt
 include flickr-rsync.ini
+include INSTALL.txt
+include LICENSE.txt
+include README.md
