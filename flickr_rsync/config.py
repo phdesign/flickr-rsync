@@ -20,7 +20,7 @@ DEFAULTS = {
     'list_only': False,
     'list_format': 'tree',
     'list_sort': False,
-    'include': '\.(jpg|png|avi|mov|mpg|mp4|3gp)$',
+    'include': '\.(jpg|jpeg|png|gif|tiff|tif|bmp|psd|svg|raw|wmv|avi|mov|mpg|mp4|3gp|ogg|ogv|m2ts)$',
     'include_dir': '',
     'exclude': '',
     'exclude_dir': '',
@@ -61,7 +61,7 @@ class Config(object):
         parser.add_argument('--list-sort', action='store_true',
                             help='sort alphabetically when --list-only, note that this forces buffering of remote sources so will be slower')
         parser.add_argument('--include', type=str, metavar='REGEX',
-                            help='include only files matching REGEX. Defaults to "\.(jpg|png|avi|mov|mpg|mp4|3gp)$"')
+                            help='include only files matching REGEX. Defaults to media file extensions only')
         parser.add_argument('--include-dir', type=str, metavar='REGEX',
                             help='include only directories matching REGEX ')
         parser.add_argument('--exclude', type=str, metavar='REGEX',
@@ -85,12 +85,13 @@ class Config(object):
         parser.add_argument('-v', '--verbose', action='store_true',
                             help='increase verbosity')
         parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
-        parser.set_defaults(**self._read_ini())
+        ini_path = self.locate_datafile(CONFIG_FILENAME)
+        parser.set_defaults(**self._read_ini(ini_path))
         self._args = parser.parse_args()
         
         if self.verbose:
-            if self._ini_path:
-                print("using config file {}".format(self._ini_path))
+            if ini_path:
+                print("using config file {}".format(ini_path))
             else:
                 print("no config file found")
 
@@ -115,13 +116,12 @@ class Config(object):
     def default_datafile(self, filename):
         return os.path.join(os.path.expanduser('~'), '.' + filename)
 
-    def _read_ini(self):
+    def _read_ini(self, ini_path):
         options = DEFAULTS.copy()
         config = ConfigParser.SafeConfigParser()
-        self._ini_path = self.locate_datafile(CONFIG_FILENAME)
 
-        if self._ini_path:
-            config.read(self._ini_path)
+        if ini_path:
+            config.read(ini_path)
             self._read_files_section(config, options)
             self._read_network_section(config, options)
             self._read_options_section(config, options)

@@ -6,24 +6,20 @@ A python script to manage synchronising a local directory of photos with Flickr 
 
 ## Installation
 
-Run the following to install flickr-rsync globally
+Run the following to install flickr-rsync globally (or append `--user` to install for just the current user)
 ```
 $ python setup.py install
 ```
 
-Or in development mode so source files are symlinked
-```
-$ python setup.py develop
+### Standalone installation
 
-# Then to uninstall
-$ python setup.py develop --uninstall
-```
-
-Alternatively, install dependencies in project folder
+Alternatively, install the dependencies in project folder
 ```
 $ make init
+```
 
-# Run with
+And run with
+```
 $ python flickr_rsync <options>
 ```
 
@@ -152,7 +148,7 @@ optional arguments:
   --list-sort           sort alphabetically when --list-only, note that this
                         forces buffering of remote sources so will be slower
   --include REGEX       include only files matching REGEX. Defaults to
-                        "\.(jpg|png|avi|mov|mpg|mp4|3gp)$"
+                        media file extensions only
   --include-dir REGEX   include only directories matching REGEX
   --exclude REGEX       exclude any files matching REGEX, note this takes
                         precedent over --include
@@ -185,6 +181,18 @@ The config file `flickr-rsync.ini` and Flickr token file `flickr-rsync.token` ar
 * `<executable dir>/flickr-rsync.ini`
 * `<executable dir>/.flickr-rsync.ini`
 
+## Developing
+
+Either install using the 'standalone' method or install in development mode so source files are symlinked
+```
+$ python setup.py develop
+```
+
+Then to uninstall
+```
+$ python setup.py develop --uninstall
+```
+
 ## Running tests
 
 ```
@@ -208,7 +216,10 @@ $ flickr-rsync flickr --exclude-dir '.*' --root-files --list-only
 
 ## Troubleshooting
 
+#### I get a Version conflict error with the six python package when installing on my Mac
+
 If you're running Mac OSX El Capitan and you get the following error when running `python setup.py test`
+
 ```
 pkg_resources.VersionConflict: (six 1.4.1 (/System/Library/Frameworks/Python.fra
 mework/Versions/2.7/Extras/lib/python), Requirement.parse('six>=1.9'))
@@ -221,16 +232,24 @@ $ sudo pip install --ignore-installed six
 
 More details [https://github.com/pypa/pip/issues/3165](https://github.com/pypa/pip/issues/3165)
 
+#### I get an error 'The Flickr API keys have not been set' but I've set them in my config (ini) file
+
+Getting an error `The Flickr API keys have not been set` but you've set them in the config file? Perhaps the application can't find the config file location. Use `-v` or `--verbose` option to print the location of the config file being used.
+
+#### Why are some files are not being show in the file list / sync?
+
+By default only media files are included in file listings and sync operations. Media files are defined as `\.(jpg|jpeg|png|gif|tiff|tif|bmp|psd|svg|raw|wmv|avi|mov|mpg|mp4|3gp|ogg|ogv|m2ts)$`. Use `--include=.*` to include all files.
+
 ## TODO
 
 * Handle nested directories (merge with separator)
-* --add-checksum-tag (Add checksumto all files)
-* --list-duplicates
-* Copy local files / add to multiple albums if checksum equal. (How to deal with same file different names)
+* Add checksums to all Flickr files (--add-checksum-tag)
+* List duplicate files
+* Use checksum matching to avoid uploading duplicate files
 * Multi-threading
 * Fix unicode characters on Windows
 * Allow search?
 * If no API key, list flickr URL to signup
 * Webpage for successfullFlickr login
 * Use a RootFolderInfo instead of None for root folder
-* Verbose treeview prints empty folders
+* Optimise - why does sort files seem to run faster?!
