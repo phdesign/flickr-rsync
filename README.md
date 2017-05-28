@@ -264,6 +264,5 @@ By default only media files are included in file listings and sync operations. M
 * Allow search?
 * If no API key, list flickr URL to signup
 * Webpage for successfullFlickr login
-* Use a RootFolderInfo instead of None for root folder
 * Optimise - why does sort files seem to run faster?!
 * Unit tests for the Network class (throttling / backoff)
