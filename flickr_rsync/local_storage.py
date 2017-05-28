@@ -47,7 +47,7 @@ class LocalStorage(Storage):
         ]
 
     def list_files(self, folder):
-        folder_abs = os.path.join(self.path, folder.name) if folder else self.path
+        folder_abs = os.path.join(self.path, folder.name)
         return [
             FileInfo(id=i, name=name.encode('utf-8'), full_path=path.encode('utf-8'), checksum=self.md5_checksum(path))
             for i, (name, path) in enumerate((x, os.path.join(folder_abs, x)) for x in os.listdir(folder_abs))
@@ -59,7 +59,7 @@ class LocalStorage(Storage):
         if isinstance(dest_storage, RemoteStorage):
             dest_storage.upload(src, folder_name, file_info.name, file_info.checksum)
         else:
-            relative_path = os.path.join(folder_name, file_info.name) if folder_name != None else file_info.name
+            relative_path = os.path.join(folder_name, file_info.name)
             dest = os.path.join(dest_storage.path, relative_path)
             mkdirp(dest)
             shutil.copyfile(src, dest)

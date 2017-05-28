@@ -8,6 +8,7 @@ import helpers
 from flickr_rsync.tree_walker import TreeWalker
 from flickr_rsync.file_info import FileInfo
 from flickr_rsync.folder_info import FolderInfo
+from flickr_rsync.root_folder_info import RootFolderInfo
 
 class TreeWalkerTest(unittest.TestCase):
 
@@ -23,6 +24,7 @@ class TreeWalkerTest(unittest.TestCase):
         self.folder_two = FolderInfo(id=2, name='B Folder')
         self.folder_three = FolderInfo(id=3, name='C Folder')
         self.folder_four = FolderInfo(id=4, name='D Folder')
+        self.root_folder = RootFolderInfo()
         self.file_one = FileInfo(id=1, name='A File')
         self.file_two = FileInfo(id=2, name='B File')
         self.file_three = FileInfo(id=3, name='C File', checksum='abc123')
@@ -41,7 +43,7 @@ class TreeWalkerTest(unittest.TestCase):
     def test_should_print_wrapper_only_given_empty_folders(self):
         walker = TreeWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
-            { 'folder': None, 'files': [] },
+            { 'folder': self.root_folder, 'files': [] },
             { 'folder': self.folder_one, 'files': [] }
         ])
 
@@ -52,7 +54,7 @@ class TreeWalkerTest(unittest.TestCase):
     def test_should_print_root_files_given_root_files_enabled(self):
         walker = TreeWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
-            { 'folder': None, 'files': [self.file_one, self.file_two] }
+            { 'folder': self.root_folder, 'files': [self.file_one, self.file_two] }
         ])
 
         walker.walk()
@@ -67,7 +69,7 @@ class TreeWalkerTest(unittest.TestCase):
     def test_should_not_print_connector_when_printing_root_files_given_folders_are_hidden(self):
         walker = TreeWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
-            { 'folder': None, 'files': [self.file_one, self.file_two] },
+            { 'folder': self.root_folder, 'files': [self.file_one, self.file_two] },
             { 'folder': self.folder_one, 'files': [] }
         ])
 
@@ -83,7 +85,7 @@ class TreeWalkerTest(unittest.TestCase):
         self.config.root_files = False
         walker = TreeWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
-            { 'folder': None, 'files': [self.file_one, self.file_two] }
+            { 'folder': self.root_folder, 'files': [self.file_one, self.file_two] }
         ])
 
         walker.walk()
@@ -94,7 +96,7 @@ class TreeWalkerTest(unittest.TestCase):
         self.config.list_sort = False
         walker = TreeWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
-            { 'folder': None, 'files': [self.file_three] },
+            { 'folder': self.root_folder, 'files': [self.file_three] },
             { 'folder': self.folder_one, 'files': [self.file_one] }
         ])
 

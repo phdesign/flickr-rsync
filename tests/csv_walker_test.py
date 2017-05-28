@@ -7,6 +7,7 @@ import helpers
 from flickr_rsync.csv_walker import CsvWalker
 from flickr_rsync.file_info import FileInfo
 from flickr_rsync.folder_info import FolderInfo
+from flickr_rsync.root_folder_info import RootFolderInfo
 
 class CsvWalkerTest(unittest.TestCase):
 
@@ -22,6 +23,7 @@ class CsvWalkerTest(unittest.TestCase):
         self.folder_two = FolderInfo(id=2, name='B Folder')
         self.folder_three = FolderInfo(id=3, name='C Folder')
         self.folder_four = FolderInfo(id=4, name='D Folder')
+        self.root_folder = RootFolderInfo()
         self.file_one = FileInfo(id=1, name='A File')
         self.file_two = FileInfo(id=2, name='B File')
         self.file_three = FileInfo(id=3, name='C File', checksum='abc123')
@@ -43,7 +45,7 @@ class CsvWalkerTest(unittest.TestCase):
     def test_should_print_header_only_given_empty_folders(self):
         walker = CsvWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
-            { 'folder': None, 'files': [] },
+            { 'folder': self.root_folder, 'files': [] },
             { 'folder': self.folder_one, 'files': [] }
         ])
 
@@ -55,9 +57,10 @@ class CsvWalkerTest(unittest.TestCase):
         ])
 
     def test_should_print_root_files_given_root_files_enabled(self):
+        self.config.root_files = True
         walker = CsvWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
-            { 'folder': None, 'files': [self.file_one, self.file_two] }
+            { 'folder': self.root_folder, 'files': [self.file_one, self.file_two] }
         ])
 
         walker.walk()
@@ -73,7 +76,7 @@ class CsvWalkerTest(unittest.TestCase):
         self.config.root_files = False
         walker = CsvWalker(self.config, self.storage)
         helpers.setup_storage(self.storage, [
-            { 'folder': None, 'files': [self.file_one, self.file_two] }
+            { 'folder': self.root_folder, 'files': [self.file_one, self.file_two] }
         ])
 
         walker.walk()

@@ -24,7 +24,6 @@ class Network(object):
         self._config = config
 
     def call(self, fn, *args, **kwargs):
-        # print("{}(*args={}, **kwargs={})".format(fn, args, kwargs))
         backoff = [0, 1, 3, 5, 10, 30, 60]
         if self._config.throttling > 0 and self._last_call != None:
             delay = self._config.throttling - (time.time() - self._last_call)
@@ -82,7 +81,7 @@ class FlickrStorage(RemoteStorage):
         """
         self._authenticate()
 
-        if not folder == None:
+        if not folder.is_root:
             operation = self._photosets[folder.id].getPhotos
         else:
             operation = self._user.getNotInSetPhotos
@@ -132,10 +131,6 @@ class FlickrStorage(RemoteStorage):
             is_friend=self._config.is_friend,
             is_family=self._config.is_family,
             async=0)
-        # TODO: use async=0
-        # We should put the album assignment on a separate thread. flickr.photos.upload.checkTickets
-        # This will mean we need to wait for async operations to finish before completing process.
-        # Maybe don't write file name to output until operation is complete
 
         if folder_name:
             photoset = self._get_folder_by_name(folder_name)

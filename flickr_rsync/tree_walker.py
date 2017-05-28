@@ -2,9 +2,10 @@
 from __future__ import print_function
 import operator
 import time
-from walker import Walker
 from rx import Observable, AnonymousObservable
 from rx.internal import extensionmethod
+from walker import Walker
+from root_folder_info import RootFolderInfo
 
 UNICODE_LEAF = u"├─── ".encode('utf-8')
 UNICODE_LAST_LEAF = u"└─── ".encode('utf-8')
@@ -45,9 +46,9 @@ class TreeWalker(Walker):
         if self._config.list_sort:
             folderlist = sorted(folderlist, key=lambda x: x.name)
         folders = Observable.from_(folderlist) \
-            .map(lambda f: { 'folder': f, 'is_root_folder': False })
+            .map(lambda f: { 'folder': f })
         if self._config.root_files:
-            folders = folders.start_with({ 'folder': None, 'is_root_folder': True }) 
+            folders = folders.start_with({ 'folder': RootFolderInfo() }) 
 
         # Expand folder messages into file messages
         folders = folders.publish().auto_connect(2)
@@ -68,7 +69,7 @@ class TreeWalker(Walker):
             .subscribe(lambda (n_files, n_shown, n_hidden): self._print_summary(time.time() - start, n_files, n_shown, n_hidden))
 
     def _not_root(self, x):
-        return x['is_root_folder'] == False
+        return not x['folder'].is_root
 
     def _walk_group(self, source):
         seen_value = [False]
@@ -76,7 +77,7 @@ class TreeWalker(Walker):
         def on_next(x):
             if not seen_value[0] and self._not_root(x):
                 self._print_folder(**x)
-            self._print_file(**x)
+            self._print_file(**dict(x, is_root_folder=x['folder'].is_root))
             seen_value[0] = True
 
         source.subscribe(on_next)

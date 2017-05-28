@@ -12,12 +12,14 @@ def setup_storage(storage, folders):
 
     Example:
         helpers.setup_storage(self.storage, [
-            { 'folder': None, 'files': [] },
+            { 'folder': RootFolderInfo(), 'files': [] },
             { 'folder': folder_one, 'files': [file_one, file_two] }
         ])
     """
-    storage.list_folders.return_value = [x['folder'] for x in folders if x['folder'] != None]
-    storage.list_files.side_effect = lambda folder: next((x['files'] for x in folders if x['folder'] == folder), [])
+    storage.list_folders.return_value = [x['folder'] for x in folders if not x['folder'].is_root]
+    storage.list_files.side_effect = \
+        lambda folder: next(
+            (x['files'] for x in folders if x['folder'] == folder or (x['folder'].is_root and folder.is_root)), [])
 
 def assert_has_calls_exactly(mock, calls, any_order=False):
     mock.assert_has_calls(calls, any_order=any_order)

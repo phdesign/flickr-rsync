@@ -4,8 +4,9 @@ import operator
 import time
 from threading import current_thread
 from rx import Observable, AnonymousObservable
-from verbose import vprint
 from rx.internal import extensionmethod
+from verbose import vprint
+from root_folder_info import RootFolderInfo
 
 @extensionmethod(Observable)
 def when_complete(self):
@@ -43,7 +44,7 @@ class Sync(object):
         to_copy = src_folders.filter(lambda x: x['dest'] == None)
         to_merge = src_folders.filter(lambda x: x['dest'] != None)
         if self._config.root_files:
-            to_merge = to_merge.start_with({ 'src': None, 'dest': None })
+            to_merge = to_merge.start_with({ 'src': RootFolderInfo(), 'dest': RootFolderInfo() })
         to_merge = to_merge.buffer(lambda: src_folders.when_complete()).flat_map(lambda x: x)
 
         # Concat streams so copy operations happen first
@@ -63,16 +64,16 @@ class Sync(object):
             .subscribe(lambda (nall, nskipped), : self._print_summary(time.time() - start, nall - nskipped, nskipped))
 
     def _expand_folder(self, src, dest):
-        is_merging = dest != None or src == None
+        is_merging = dest != None
         vprint("{} {} [{}]".format("merging" if is_merging else "copying", 
-            src.name if src else 'root', current_thread().name))
+            src.name if not src.is_root else 'root', current_thread().name))
         dest_files = [f.name.lower() for f in self._dest.list_files(dest)] if is_merging else []
         source = Observable.from_(self._src.list_files(src))
         return source.map(lambda f: { 
             'folder': src,
             'file': f,
             'exists': f.name.lower() in dest_files,
-            'path': os.path.join(src.name, f.name) if src else f.name
+            'path': os.path.join(src.name, f.name)
         })
 
     def _copy_file(self, folder, file, path, **kwargs):
@@ -82,4 +83,5 @@ class Sync(object):
         vprint("{}...copied [{}]".format(path, current_thread().name))
 
     def _print_summary(self, elapsed, files_copied, files_skipped):
-        print("\ntransferred {} file(s), skipped {} files(s) that already exist in {} sec".format(files_copied, files_skipped, round(elapsed, 2)))
+        skipped_msg = ", skipped {} files(s) that already exist".format(files_skipped) if files_skipped > 0 else ''
+        print("\ntransferred {} file(s){} in {} sec".format(files_copied, skipped_msg, round(elapsed, 2)))
