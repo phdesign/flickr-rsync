@@ -1,1 +1,23 @@
-python setup.py install --user
+Requires:
+ - python 2.7+
+ - flickr_api~=0.5
+ - argparse~=1.4.0
+ - rx~=1.5.9
+ - futures~=3.1.1
+
+1) Install
+This package uses setuptools to install.
+
+$ python setup.py install --user # to install for just this user
+$ python setup.py install # for global installation
+
+2) Configure API keys
+Two keys are provided by Flickr, an api key and a secret. To make your
+application aware of these keys there are two methods:
+ i  - provide --api-key and --api-secret arguments to the command line
+ ii - create a config file in $HOME/.flickr-rsync.ini with the following entries
+
+API_KEY = xxxxxxxxxxxxxxxxxxx
+API_SECRET = yyyyyyyyyyyyyy
+
+where x's and y's are replaced by the values provided by Flickr.

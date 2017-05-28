@@ -23,6 +23,19 @@ And run with
 $ python flickr_rsync <options>
 ```
 
+## Authenticating with Flickr
+
+Two keys are provided by Flickr, an api key and a secret. To make your application aware of these keys there are two methods:
+ * provide `--api-key` and `--api-secret` arguments to the command line
+ * create a config file in $HOME/.flickr-rsync.ini with the following entries
+
+```
+API_KEY = xxxxxxxxxxxxxxxxxxx
+API_SECRET = yyyyyyyyyyyyyy
+```
+
+where x's and y's are replaced by the values provided by Flickr.
+
 ## Listing files
 
 The `--list-only` flag will print a list of files in the source storage provider, this can either be Flickr by specifying the `src` as `Flickr` or a local file system path. Use `--sort-files` to sort the files alphabetically. This feature is useful for manually creating a diff between your local files and Flickr files.
@@ -155,7 +168,7 @@ optional arguments:
   --exclude-dir REGEX   exclude any directories matching REGEX, note this
                         takes precedent over --include-dir
   --root-files          includes roots files (not in a directory or a
-                        photoset) in the list or copy
+                        photoset) in the list or copy 
   -n, --dry-run         in sync mode, don't actually copy anything, just
                         simulate the process and output
   --throttling SEC      the delay in seconds (may be decimal) before each
