@@ -41,13 +41,13 @@ setup(
     keywords='',
     classifiers='',
     install_requires=[
-        'flickr_api>=0.6beta',
+        'flickr_api>=0.5beta',
         'argparse~=1.4.0',
         'rx~=1.5.9',
         'futures~=3.1.1'
     ],
     dependency_links = [
-      'https://github.com/alexis-mignon/python-flickr-api/tarball/6f3163b#egg=flickr_api-0.6beta'
+      'https://github.com/alexis-mignon/python-flickr-api/tarball/6f3163b#egg=flickr_api-0.5beta'
     ],
     tests_require=[
         'mock~=2.0.0'
