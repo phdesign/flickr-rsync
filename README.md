@@ -276,10 +276,9 @@ $ flickr-rsync "C:\Users\xxx\Pictures" --list-only
 * List duplicate files
 * Use checksum matching to avoid uploading duplicate files
 * Multi-threading
-* Fix unicode characters on Windows
 * Use search to make a filtered lokup faster, is this even possible?
 * If no API key, list flickr URL to signup
-* Webpage for successfullFlickr login
+* Webpage for successful Flickr login
 * Optimise - why does sort files seem to run faster?!
 * Unit tests for the Network class (throttling / backoff)
 * Fix duplicate albums issue
