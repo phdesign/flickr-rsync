@@ -26,8 +26,8 @@ $ python flickr_rsync <options>
 ## Authenticating with Flickr
 
 Two keys are provided by Flickr, an api key and a secret. To make your application aware of these keys there are two methods:
- * provide `--api-key` and `--api-secret` arguments to the command line
- * create a config file in $HOME/.flickr-rsync.ini with the following entries
+* provide `--api-key` and `--api-secret` arguments to the command line
+* create a config file in $HOME/.flickr-rsync.ini with the following entries
 
 ```
 API_KEY = xxxxxxxxxxxxxxxxxxx
@@ -252,6 +252,22 @@ Getting an error `The Flickr API keys have not been set` but you've set them in 
 #### Why are some files are not being show in the file list / sync?
 
 By default only media files are included in file listings and sync operations. Media files are defined as `\.(jpg|jpeg|png|gif|tiff|tif|bmp|psd|svg|raw|wmv|avi|mov|mpg|mp4|3gp|ogg|ogv|m2ts)$`. Use `--include=.*` to include all files.
+
+### I get an error 'The filename, directory name or volume label syntax is incorrect'
+
+If you're seeing an error like this
+
+```
+WindowsError: [Error 123] The filename, directory name, or volume label syntax is incorrect: 'C:\\Users\\xxx\\Pictures" --list-only/*.*'
+```
+
+Ensure that you are not using single quotes `'` around a folder path in windows, instead use double quotes `"`. e.g.
+
+```
+$ flickr-rsync "C:\Users\xxx\Pictures" --list-only
+```
+
+
 
 ## TODO
 

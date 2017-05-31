@@ -30,7 +30,13 @@ def _get_walker(config, storage, list_format):
     else:
         raise ValueError('Unrecognised value for list-format: {}'.format(list_format))
 
+def patch_win_unicode():
+    if os.name == 'nt':
+        import win_unicode_console
+        win_unicode_console.enable()
+
 def main():
+    patch_win_unicode()
     try:
         config = Config()
         config.read()
