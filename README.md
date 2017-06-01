@@ -282,3 +282,5 @@ $ flickr-rsync "C:\Users\xxx\Pictures" --list-only
 * Optimise - why does sort files seem to run faster?!
 * Unit tests for the Network class (throttling / backoff)
 * Fix duplicate albums issue
+* Windows redirect to file encoding issue
+* Option to calculate checksum when reading local files (--list-checksum)
