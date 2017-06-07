@@ -20,6 +20,7 @@ DEFAULTS = {
     'list_only': False,
     'list_format': 'tree',
     'list_sort': False,
+    'checksum': False,
     'include': '\.(jpg|jpeg|png|gif|tiff|tif|bmp|psd|svg|raw|wmv|avi|mov|mpg|mp4|3gp|ogg|ogv|m2ts)$',
     'include_dir': '',
     'exclude': '',
@@ -60,6 +61,8 @@ class Config(object):
                             help='output format for --list-only, TREE for a tree based output or CSV')
         parser.add_argument('--list-sort', action='store_true',
                             help='sort alphabetically when --list-only, note that this forces buffering of remote sources so will be slower')
+        parser.add_argument('--checksum', action='store_true',
+                            help='calculate file checksums for local files. Print checksum when listing, use checksum for comparison when syncing')
         parser.add_argument('--include', type=str, metavar='REGEX',
                             help='include only files matching REGEX. Defaults to media file extensions only')
         parser.add_argument('--include-dir', type=str, metavar='REGEX',
@@ -136,6 +139,7 @@ class Config(object):
             'list_only': bool,
             'list_format': lambda item: item.lower(),
             'list_sort': bool,
+            'checksum': bool,
             'dry_run': bool,
             'verbose': bool
         })
