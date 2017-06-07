@@ -248,11 +248,15 @@ $ sudo pip install --ignore-installed six
 
 More details [https://github.com/pypa/pip/issues/3165](https://github.com/pypa/pip/issues/3165)
 
+#### I get an error 'The Flickr API keys have not been set'
+
+To access Flickr this application needs API keys, go to http://www.flickr.com/services/apps/create/apply to sign up for a free personal API key
+
 #### I get an error 'The Flickr API keys have not been set' but I've set them in my config (ini) file
 
 Getting an error `The Flickr API keys have not been set` but you've set them in the config file? Perhaps the application can't find the config file location. Use `-v` or `--verbose` option to print the location of the config file being used.
 
-#### Why are some files are not being show in the file list / sync?
+#### Why are some files are not being shown in the file list / sync?
 
 By default only media files are included in file listings and sync operations. Media files are defined as `\.(jpg|jpeg|png|gif|tiff|tif|bmp|psd|svg|raw|wmv|avi|mov|mpg|mp4|3gp|ogg|ogv|m2ts)$`. Use `--include=.*` to include all files.
 
