@@ -275,15 +275,11 @@ $ flickr-rsync "C:\Users\xxx\Pictures" --list-only
 ## TODO
 
 * Handle nested directories (merge with separator)
-* Add checksums to all Flickr files (--add-checksum-tag)
 * List duplicate files
 * Use checksum matching to avoid uploading duplicate files
 * Multi-threading
 * Use search to make a filtered lokup faster, is this even possible?
-* If no API key, list flickr URL to signup
 * Webpage for successful Flickr login
 * Optimise - why does sort files seem to run faster?!
-* Unit tests for the Network class (throttling / backoff)
 * Fix duplicate albums issue
 * Windows redirect to file encoding issue
-* Option to calculate checksum when reading local files (--list-checksum)

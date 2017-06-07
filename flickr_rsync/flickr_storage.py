@@ -195,5 +195,7 @@ class FlickrStorage(RemoteStorage):
 
         except flickr_api.flickrerrors.FlickrError as e:
             print(e.message)
+            if e.message == 'The Flickr API keys have not been set':
+                print("Go to http://www.flickr.com/services/apps/create/apply and apply for an API key")
             sys.exit(1);
 
