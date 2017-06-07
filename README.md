@@ -160,7 +160,7 @@ optional arguments:
                         output or CSV
   --list-sort           sort alphabetically when --list-only, note that this
                         forces buffering of remote sources so will be slower
-  --checksum            calculate file checksums for local files. Print
+  -c, --checksum        calculate file checksums for local files. Print
                         checksum when listing, use checksum for comparison
                         when syncing
   --include REGEX       include only files matching REGEX. Defaults to
