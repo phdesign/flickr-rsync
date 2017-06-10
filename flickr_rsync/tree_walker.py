@@ -53,8 +53,9 @@ class TreeWalker(Walker):
         # Expand folder messages into file messages
         folders = folders.publish().auto_connect(2)
         files = folders.is_last() \
-            .map(lambda (x, is_last): dict(x, is_last_folder=is_last)) \
-            .concat_map(lambda x: self._walk_folder(x))
+            .map(lambda (x, is_last): dict(x, is_last_folder=is_last))
+        if not self._config.skip_files:
+            files = files.concat_map(lambda x: self._walk_folder(x))
         # Group by folder but still provide a file stream within each group
         groups = files.group_by(lambda x: x['folder'])
         groups.subscribe(self._walk_group)
@@ -77,7 +78,8 @@ class TreeWalker(Walker):
         def on_next(x):
             if not seen_value[0] and self._not_root(x):
                 self._print_folder(**x)
-            self._print_file(**dict(x, is_root_folder=x['folder'].is_root))
+            if 'file' in x:
+                self._print_file(**dict(x, is_root_folder=x['folder'].is_root))
             seen_value[0] = True
 
         source.subscribe(on_next)
@@ -110,6 +112,7 @@ class TreeWalker(Walker):
             print(UNICODE_BRANCH)
 
     def _print_summary(self, elapsed, file_count, folder_count, hidden_folder_count):
-        print("{} directories, {} files{} read in {} sec".format(folder_count, file_count,
+        print("{} directories{}{} read in {} sec".format(folder_count, 
+            ", {} files".format(file_count) if not self._config.skip_files else "",
             " (excluding {} empty directories)".format(hidden_folder_count) if hidden_folder_count > 0 else "",
             round(elapsed, 2)))
