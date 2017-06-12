@@ -43,7 +43,7 @@ def main():
         verbose.set_config(config)
 
         src_storage = _get_storage(config, config.src)
-        if config.list_only:
+        if config.list_only or config.list_folders:
             walker = _get_walker(config, src_storage, config.list_format)
             walker.walk()
         else:

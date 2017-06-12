@@ -18,7 +18,7 @@ class CsvWalker(Walker):
         folders = Observable.from_(self._storage.list_folders())
         if self._config.root_files:
            folders = folders.start_with(RootFolderInfo()) 
-        if self._config.skip_files:
+        if self._config.list_folders:
             print("Folder")
             if self._config.list_sort:
                 folders = folders.to_sorted_list(key_selector=lambda folder: folder.name) \
