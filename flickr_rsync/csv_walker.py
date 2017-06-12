@@ -20,6 +20,9 @@ class CsvWalker(Walker):
            folders = folders.start_with(RootFolderInfo()) 
         if self._config.skip_files:
             print("Folder")
+            if self._config.list_sort:
+                folders = folders.to_sorted_list(key_selector=lambda folder: folder.name) \
+                    .flat_map(lambda x: x)
             folders.subscribe(on_next=lambda folder: print(folder.name) if folder else '',
                 on_completed=lambda: self._print_summary(time.time() - start))
         else:
@@ -28,12 +31,10 @@ class CsvWalker(Walker):
             files = folders.concat_map(lambda folder: Observable.from_((fileinfo, folder) for fileinfo in self._storage.list_files(folder)))
             # Print each file
             if self._config.list_sort:
-                files.to_sorted_list(key_selector=lambda (fileinfo, folder): "{} {}".format(folder.name, fileinfo.name)) \
-                    .subscribe(on_next=lambda items: [self._print_file(folder, fileinfo) for fileinfo, folder in items],
-                        on_completed=lambda: self._print_summary(time.time() - start))
-            else:
-                files.subscribe(on_next=lambda (fileinfo, folder): self._print_file(folder, fileinfo),
-                    on_completed=lambda: self._print_summary(time.time() - start))
+                folders = folders.to_sorted_list(key_selector=lambda (fileinfo, folder): "{} {}".format(folder.name, fileinfo.name)) \
+                    .flat_map(lambda x: x)
+            files.subscribe(on_next=lambda (fileinfo, folder): self._print_file(folder, fileinfo),
+                on_completed=lambda: self._print_summary(time.time() - start))
     
     def _print_file(self, folder, fileinfo):
         print("{}, {}, {}".format(folder.name if folder else '', fileinfo.name, fileinfo.checksum))
