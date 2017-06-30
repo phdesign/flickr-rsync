@@ -6,14 +6,30 @@ A python script to manage synchronising a local directory of photos with Flickr 
 
 ## Installation
 
-Run the following to install flickr-rsync globally (or append `--user` to install for just the current user)
+### Via PyPI
+
+Install from the python package manager by
+```
+$ pip install flickr-rsync
+```
+
+### From GitHub repo
+
+Clone the GitHub repo locally
+
+To install globally:
 ```
 $ python setup.py install
 ```
 
+To install for the current user only:
+```
+$ python setup.py install --user
+```
+
 ### Standalone installation
 
-Alternatively, install the dependencies in project folder
+Alternatively, install the dependencies in `<project folder>/libs`
 ```
 $ make init
 ```
@@ -207,6 +223,17 @@ $ python setup.py develop
 Then to uninstall
 ```
 $ python setup.py develop --uninstall
+```
+
+## Deploying
+
+Based on [http://peterdowns.com/posts/first-time-with-pypi.html](http://peterdowns.com/posts/first-time-with-pypi.html)
+
+1. Create a new GitHub release (e.g. v1.1.1)
+2. Update `flickr_rsync/_version.py` with the new version number (e.g. 1.1.1)
+3. Push to PyPI
+```
+$ python setup.py sdist upload
 ```
 
 ## Running tests

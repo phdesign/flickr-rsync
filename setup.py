@@ -40,9 +40,10 @@ setup(
     author='Paul Heasley',
     author_email='paul@phdesign.com.au',
     url='http://www.phdesign.com.au/flickr-rsync',
+    download_url='https://github.com/phdesign/flickr-rsync/archive/v{}.tar.gz'.format(__version__),
     packages=['flickr_rsync'],
     license='MIT',
-    keywords='',
+    keywords=['flickr', 'sync', 'rsync'],
     classifiers='',
     install_requires=[
         'flickr_api>=0.5beta',
