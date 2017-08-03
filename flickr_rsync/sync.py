@@ -2,24 +2,8 @@ from __future__ import print_function
 import os
 import operator
 import time
-from threading import current_thread
-from rx import Observable, AnonymousObservable
-from rx.internal import extensionmethod
 from verbose import vprint
 from root_folder_info import RootFolderInfo
-
-@extensionmethod(Observable)
-def when_complete(self):
-    source = self
-
-    def subscribe(observer):
-        def on_completed():
-            observer.on_next()
-            observer.on_completed()
-
-        return source.subscribe(on_completed=on_completed, on_error=observer.on_error)
-
-    return AnonymousObservable(subscribe)
 
 class Sync(object):
     
@@ -27,6 +11,8 @@ class Sync(object):
         self._config = config
         self._src = src
         self._dest = dest
+        self._copy_count = 0
+        self._skip_count = 0
 
     def run(self):
         if self._config.dry_run:
@@ -34,54 +20,50 @@ class Sync(object):
         print("building folder list...")
         start = time.time()
 
+        src_folders = self._src.list_folders()
         dest_folders = {folder.name.lower(): folder for folder in self._dest.list_folders()}
-        # Create folder stream
-        src_folders = Observable.from_(self._src.list_folders()) \
-            .map(lambda folder: { 'src': folder, 'dest': dest_folders.get(folder.name.lower()) }) \
-            .publish().auto_connect(2)
-        
-        # Split into copy and merge streams
-        to_copy = src_folders.filter(lambda x: x['dest'] == None)
-        to_merge = src_folders.filter(lambda x: x['dest'] != None)
+        for src_folder in src_folders:
+            dest_folder = dest_folders.get(src_folder.name.lower())
+            if dest_folder:
+                print(src_folder.name + os.sep)
+                self._merge_folders(src_folder, dest_folder)
+            else:
+                print(src_folder.name + os.sep)
+                self._copy_folder(src_folder)
+        # Merge root files if requested
         if self._config.root_files:
-            to_merge = to_merge.start_with({ 'src': RootFolderInfo(), 'dest': RootFolderInfo() })
-        to_merge = to_merge.buffer(lambda: src_folders.when_complete()).flat_map(lambda x: x)
+            self._merge_folders(RootFolderInfo(), RootFolderInfo())
 
-        # Concat streams so copy operations happen first
-        pending = to_copy \
-            .merge(to_merge) \
-            .flat_map(lambda x: self._expand_folder(**x)) \
-            .publish().auto_connect(2)
-        pending \
-            .subscribe(lambda x: self._copy_file(**x) if not x['exists'] else
-                vprint("{}...skipped, file exists".format(x['path'])))
+        self._print_summary(time.time() - start, self._copy_count, self._skip_count)
 
-        # Count files, print summary
-        skipped_count = pending.count(lambda x: x['exists'])
-        pending \
-            .count() \
-            .zip(skipped_count, lambda nall, nskipped: (nall, nskipped)) \
-            .subscribe(lambda (nall, nskipped), : self._print_summary(time.time() - start, nall - nskipped, nskipped))
+    def _copy_folder(self, folder):
+        src_files = self._src.list_files(folder)
+        for src_file in src_files:
+            path = os.path.join(folder.name, src_file.name)
+            self._copy_count += 1
+            self._copy_file(folder, src_file, path)
 
-    def _expand_folder(self, src, dest):
-        is_merging = dest != None
-        vprint("{} {} [{}]".format("merging" if is_merging else "copying", 
-            src.name if not src.is_root else 'root', current_thread().name))
-        dest_files = [f.name.lower() for f in self._dest.list_files(dest)] if is_merging else []
-        source = Observable.from_(self._src.list_files(src))
-        return source.map(lambda f: { 
-            'folder': src,
-            'file': f,
-            'exists': f.name.lower() in dest_files,
-            'path': os.path.join(src.name, f.name)
-        })
+    def _merge_folders(self, src_folder, dest_folder):
+        src_files = self._src.list_files(src_folder)
+        dest_files = [file.name.lower() for file in self._dest.list_files(dest_folder)]
+        for src_file in src_files:
+            path = os.path.join(src_folder.name, src_file.name)
+            file_exists = src_file.name.lower() in dest_files
+            if not file_exists:
+                self._copy_count += 1
+                self._copy_file(src_folder, src_file, path)
+            else:
+                self._skip_count += 1
+                vprint("{}...skipped, file exists".format(path))
+        pass
 
-    def _copy_file(self, folder, file, path, **kwargs):
+    def _copy_file(self, folder, file, path):
         print(path)
         if not self._config.dry_run:
             self._src.copy_file(file, folder and folder.name, self._dest)
-        vprint("{}...copied [{}]".format(path, current_thread().name))
+        vprint("{}...copied".format(path))
 
     def _print_summary(self, elapsed, files_copied, files_skipped):
         skipped_msg = ", skipped {} files(s) that already exist".format(files_skipped) if files_skipped > 0 else ''
         print("\ntransferred {} file(s){} in {} sec".format(files_copied, skipped_msg, round(elapsed, 2)))
+
