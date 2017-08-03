@@ -31,7 +31,7 @@ class CsvWalker(Walker):
             files = folders.concat_map(lambda folder: Observable.from_((fileinfo, folder) for fileinfo in self._storage.list_files(folder)))
             # Print each file
             if self._config.list_sort:
-                folders = folders.to_sorted_list(key_selector=lambda (fileinfo, folder): "{} {}".format(folder.name, fileinfo.name)) \
+                files = files.to_sorted_list(key_selector=lambda (fileinfo, folder): "{} {}".format(folder.name, fileinfo.name)) \
                     .flat_map(lambda x: x)
             files.subscribe(on_next=lambda (fileinfo, folder): self._print_file(folder, fileinfo),
                 on_completed=lambda: self._print_summary(time.time() - start))

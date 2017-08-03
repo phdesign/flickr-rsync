@@ -17,7 +17,9 @@ class CsvWalkerTest(unittest.TestCase):
         self.time_patch.start().return_value = 0
 
         self.config = MagicMock()
+        self.config.root_files = False
         self.config.list_folders = False
+        self.config.list_sort = False
         self.storage = MagicMock()
         self.folder_one = FolderInfo(id=1, name='A Folder')
         self.folder_two = FolderInfo(id=2, name='B Folder')
@@ -164,6 +166,41 @@ class CsvWalkerTest(unittest.TestCase):
             call("B Folder, C File, abc123"),
             call("B Folder, B File, None"),
             call("A Folder, A File, None"),
+            call("\ndone in 0.0 sec")
+        ])
+
+    def test_should_print_only_folders_given_list_folders_enabled(self):
+        self.config.list_folders = True
+        walker = CsvWalker(self.config, self.storage)
+        helpers.setup_storage(self.storage, [
+            { 'folder': self.folder_two, 'files': [self.file_three, self.file_two] },
+            { 'folder': self.folder_one, 'files': [self.file_one] }
+        ])
+
+        walker.walk()
+
+        self.mock_print.assert_has_calls_exactly([
+            call("Folder"),
+            call("B Folder"),
+            call("A Folder"),
+            call("\ndone in 0.0 sec")
+        ])
+
+    def test_should_print_sorted_folders_given_list_folders_and_sort_enabled(self):
+        self.config.list_sort = True
+        self.config.list_folders = True
+        walker = CsvWalker(self.config, self.storage)
+        helpers.setup_storage(self.storage, [
+            { 'folder': self.folder_two, 'files': [self.file_three, self.file_two] },
+            { 'folder': self.folder_one, 'files': [self.file_one] }
+        ])
+
+        walker.walk()
+
+        self.mock_print.assert_has_calls_exactly([
+            call("Folder"),
+            call("A Folder"),
+            call("B Folder"),
             call("\ndone in 0.0 sec")
         ])
 
