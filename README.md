@@ -92,6 +92,13 @@ Folder, Filename, Checksum
 2017-04-16 Easter Camping, IMG_2517.jpg, 4fe9085b9f320a67988f84e85338a3ff
 ```
 
+## Listing folders
+
+To just list the top level folders (without all the files). use `--list-folders`. 
+
+```
+$ flickr-rsync ~/Pictures --list-folders
+```
 ## Syncing files
 
 e.g. To copy all files from Flickr to a local folder
@@ -164,6 +171,7 @@ optional arguments:
                         output or CSV
   --list-sort           sort alphabetically when --list-only, note that this
                         forces buffering of remote sources so will be slower
+  --list-folders        lists only folders (no files, implies --list-only)
   -c, --checksum        calculate file checksums for local files. Print
                         checksum when listing, use checksum for comparison
                         when syncing
@@ -271,7 +279,7 @@ Getting an error `The Flickr API keys have not been set` but you've set them in 
 
 By default only media files are included in file listings and sync operations. Media files are defined as `\.(jpg|jpeg|png|gif|tiff|tif|bmp|psd|svg|raw|wmv|avi|mov|mpg|mp4|3gp|ogg|ogv|m2ts)$`. Use `--include=.*` to include all files.
 
-### I get an error 'The filename, directory name or volume label syntax is incorrect'
+#### I get an error 'The filename, directory name or volume label syntax is incorrect'
 
 If you're seeing an error like this
 
@@ -284,6 +292,15 @@ Ensure that you are not using single quotes `'` around a folder path in windows,
 ```
 $ flickr-rsync "C:\Users\xxx\Pictures" --list-only
 ```
+
+#### When I try list list in a local folder called 'flickr' it lists my remote flickr files
+
+flickr-rsync uses the keyword `flickr` as a src or dest to denote pulling the list from flickr. If you have a folder called flickr, just give it a relative or absolute path make it obvious that it's a file path, e.g.
+
+```
+$ flickr-rsync ./flickr --list-only
+```
+
 
 ## Release notes
 
@@ -301,4 +318,3 @@ $ flickr-rsync "C:\Users\xxx\Pictures" --list-only
 * Webpage for successful Flickr login
 * Optimise - why does sort files seem to run faster?!
 * Fix duplicate albums issue
-* Windows redirect to file encoding issue
