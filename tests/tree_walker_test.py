@@ -19,6 +19,7 @@ class TreeWalkerTest(unittest.TestCase):
         self.time_patch.start().return_value = 0
 
         self.config = MagicMock()
+        self.config.list_folders = False
         self.storage = MagicMock()
         self.folder_one = FolderInfo(id=1, name='A Folder')
         self.folder_two = FolderInfo(id=2, name='B Folder')
