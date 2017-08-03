@@ -3,7 +3,6 @@ import os, sys
 import unittest
 import urllib2
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/..')
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../libs')
 from mock import MagicMock, patch, call
 import helpers
 from flickr_rsync.flickr_storage import Network

@@ -27,18 +27,6 @@ To install for the current user only:
 $ python setup.py install --user
 ```
 
-### Standalone installation
-
-Alternatively, install the dependencies in `<project folder>/libs`
-```
-$ make init
-```
-
-And run with
-```
-$ python flickr_rsync <options>
-```
-
 ## Authenticating with Flickr
 
 Two keys are provided by Flickr, an api key and a secret. To make your application aware of these keys there are two methods:
@@ -244,10 +232,6 @@ $ python setup.py test -q
 Or
 ```
 $ python -m unittest discover -s tests -p '*_test.py'
-```
-Or
-```
-$ make test
 ```
 
 ## Tips

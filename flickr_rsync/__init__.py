@@ -2,9 +2,6 @@ from __future__ import print_function
 import os, sys
 import urllib2
 
-# Load third party dependencies, check in /libs folder if you've installed them there
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '../libs')
-
 import verbose as verbose
 from storage import Storage
 from config import Config
