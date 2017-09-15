@@ -48,7 +48,11 @@ class Sync(object):
         dest_files = [file.name.lower() for file in self._dest.list_files(dest_folder)]
         for src_file in src_files:
             path = os.path.join(src_folder.name, src_file.name)
-            file_exists = src_file.name.lower() in dest_files
+            lower_filename = src_file.name.lower()
+            file_exists = lower_filename in dest_files
+            # Fix for flickr converting .jpeg to .jpg.
+            if lower_filename.endswith(".jpeg"):
+                file_exists = file_exists or "{}.jpg".format(lower_filename[:-5]) in dest_files
             if not file_exists:
                 self._copy_count += 1
                 self._copy_file(src_folder, src_file, path)

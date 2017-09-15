@@ -285,6 +285,10 @@ Ensure that you are not using single quotes `'` around a folder path in windows,
 $ flickr-rsync "C:\Users\xxx\Pictures" --list-only
 ```
 
+## Release notes
+
+### v1.0.3 (16 Sep 2017)
+* Flickr converts .jpeg to .jpg extensions, so consider them the same when comparing for sync
 
 
 ## TODO
