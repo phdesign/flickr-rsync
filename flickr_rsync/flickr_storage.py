@@ -17,28 +17,6 @@ TOKEN_FILENAME = __packagename__ + '.token'
 CHECKSUM_PREFIX = 'checksum:md5'
 OAUTH_PERMISSIONS = 'write'
 
-class Network(object):
-    _last_call = None
-
-    def __init__(self, config):
-        self._config = config
-
-    def call(self, fn, *args, **kwargs):
-        backoff = [0, 1, 3, 5, 10, 30, 60]
-        if self._config.throttling > 0 and self._last_call != None:
-            delay = self._config.throttling - (time.time() - self._last_call)
-            if delay > 0:
-                time.sleep(delay)
-        for i in range(self._config.retry):
-            if i > 0:
-                time.sleep(backoff[i] if i < len(backoff) else backoff[-1])
-            try:
-                self._last_call = time.time()
-                return fn(*args, **kwargs)
-            except urllib2.URLError as ex:
-                print("  Retrying ({} of {}) after connection broken by '{}'".format(i+1, self._config.retry, ex))
-        return fn(*args, **kwargs)
-
 class FlickrStorage(RemoteStorage):
 
     def __init__(self, config):
@@ -47,7 +25,6 @@ class FlickrStorage(RemoteStorage):
         self._user = None
         self._photosets = {}
         self._photos = {}
-        self._net = Network(config)
 
     def list_folders(self):
         """
@@ -58,7 +35,7 @@ class FlickrStorage(RemoteStorage):
         """
         self._authenticate()
 
-        walker = flickr_api.objects.Walker(self._net.call, self._user.getPhotosets)
+        walker = self._getUserPhotosetsWithRetry(self._user)
         for photoset in walker:
             self._photosets[photoset.id] = photoset
             folder = FolderInfo(id=photoset.id, name=photoset.title.encode('utf-8'))
@@ -82,10 +59,10 @@ class FlickrStorage(RemoteStorage):
         self._authenticate()
 
         if not folder.is_root:
-            operation = self._photosets[folder.id].getPhotos
+            walker = self._getPhotosInPhotosetWithRetry(self._photosets[folder.id])
         else:
-            operation = self._user.getNotInSetPhotos
-        walker = flickr_api.objects.Walker(self._net.call, operation, extras='original_format,tags')
+            walker = self._getPhotosNotInPhotosetWithRetry(self._user)
+
         for photo in walker:
             self._photos[photo.id] = photo
             file_info = self._get_file_info(photo)
@@ -105,7 +82,7 @@ class FlickrStorage(RemoteStorage):
         """
         mkdirp(dest_path)
         photo = self._photos[file_info.id]
-        self._net.call(photo.save, dest_path, size_label='Original')
+        self._downloadPhotoWithRetry(photo)
 
     def upload(self, src_path, folder_name, file_name, checksum):
         """
@@ -122,23 +99,21 @@ class FlickrStorage(RemoteStorage):
         tags = self._config.tags
         if checksum:
             tags = '{} {}={}'.format(tags, CHECKSUM_PREFIX, checksum)
-        photo = self._net.call(
-            flickr_api.upload,
-            photo_file=src_path, 
-            title=os.path.splitext(file_name)[0], 
-            tags=tags.strip(),
-            is_public=self._config.is_public,
-            is_friend=self._config.is_friend,
-            is_family=self._config.is_family,
-            async=0)
+        photo = self._uploadPhotoWithRetry(
+            src_path,
+            file_name,
+            tags,
+            self._config.is_public,
+            self._config.is_friend,
+            self._config.is_family)
 
         if folder_name:
             photoset = self._get_folder_by_name(folder_name)
             if not photoset:
-                photoset = self._net.call(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
+                self._createFolderWithRetry(folder_name, photo)
                 self._photosets[photoset.id] = photoset
             else:
-                self._net.call(photoset.addPhoto, photo=photo)
+                self._addPhotoToFolderWithRetry(photoset, photo)
 
     def copy_file(self, file_info, folder_name, dest_storage):
         if isinstance(dest_storage, RemoteStorage):
@@ -198,4 +173,33 @@ class FlickrStorage(RemoteStorage):
             if e.message == 'The Flickr API keys have not been set':
                 print("Go to http://www.flickr.com/services/apps/create/apply and apply for an API key")
             sys.exit(1);
+
+    def _getUserPhotosetsWithRetry(self, user):
+        return flickr_api.objects.Walker(user.getPhotosets)
+
+    def _getPhotosInPhotosetWithRetry(self, photoset):
+        return flickr_api.objects.Walker(photoset.getPhotos, extras='original_format,tags')
+
+    def _getPhotosNotInPhotosetWithRetry(self, user):
+        return flickr_api.objects.Walker(user.getNotInSetPhotos, extras='original_format,tags')
+
+    def _downloadPhotoWithRetry(self, photo):
+        photo.save(dest_path, size_label='Original')
+
+    def _uploadPhotoWithRetry(self, src_path, file_name, tags, is_public, is_friend, is_family):
+        return flickr_api.upload(
+            photo_file=src_path, 
+            title=os.path.splitext(file_name)[0], 
+            tags=tags.strip(),
+            is_public=is_public,
+            is_friend=is_friend,
+            is_family=is_family,
+            async=0)
+        
+    def _createFolderWithRetry(self, folder_name, primary_photo):
+        return flickr_api.Photoset.create(title=folder_name, primary_photo=primary_photo)
+
+    def _addPhotoToFolderWithRetry(self, photoset, photo):
+        photoset.addPhoto(photo=photo)
+
 
