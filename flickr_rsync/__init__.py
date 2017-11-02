@@ -6,6 +6,7 @@ import verbose as verbose
 from storage import Storage
 from config import Config
 from sync import Sync
+from resiliently import Resiliently
 from flickr_storage import FlickrStorage
 from local_storage import LocalStorage
 from fake_storage import FakeStorage
@@ -14,7 +15,8 @@ from csv_walker import CsvWalker
 
 def _get_storage(config, path):
     if path.lower() == Config.PATH_FLICKR:
-        return FlickrStorage(config)
+        resiliently = Resiliently(config)
+        return FlickrStorage(config, resiliently)
     elif path.lower() == config.PATH_FAKE:
         return FakeStorage(config)
     return LocalStorage(config, path)

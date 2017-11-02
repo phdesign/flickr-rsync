@@ -3,28 +3,23 @@ import os, sys
 import re
 import webbrowser
 import datetime
-import logging
 from storage import RemoteStorage
-import backoff
 import flickr_api
 from flickr_api.api import flickr
 from file_info import FileInfo
 from folder_info import FolderInfo
 from local_storage import mkdirp
-from throttle import throttle
 from config import __packagename__
 
 TOKEN_FILENAME = __packagename__ + '.token'
 CHECKSUM_PREFIX = 'checksum:md5'
 OAUTH_PERMISSIONS = 'write'
 
-logging.getLogger('backoff').addHandler(logging.StreamHandler())
-logging.getLogger('backoff').setLevel(logging.DEBUG)
-
 class FlickrStorage(RemoteStorage):
 
-    def __init__(self, config):
+    def __init__(self, config, resiliently):
         self._config = config
+        self._resiliently = resiliently
         self._is_authenticated = False
         self._user = None
         self._photosets = {}
@@ -39,7 +34,7 @@ class FlickrStorage(RemoteStorage):
         """
         self._authenticate()
 
-        walker = self._resiliently(flickr_api.objects.Walker, self._user.getPhotosets)
+        walker = self._resiliently.call(flickr_api.objects.Walker, self._user.getPhotosets)
         for photoset in walker:
             self._photosets[photoset.id] = photoset
             folder = FolderInfo(id=photoset.id, name=photoset.title.encode('utf-8'))
@@ -63,12 +58,12 @@ class FlickrStorage(RemoteStorage):
         self._authenticate()
 
         if not folder.is_root:
-            walker = self._resiliently(
+            walker = self._resiliently.call(
                 flickr_api.objects.Walker,
                 self._photosets[folder.id].getPhotos,
                 extras='original_format,tags')
         else:
-            walker = self._resiliently(
+            walker = self._resiliently.call(
                 flickr_api.objects.Walker,
                 self._user.getNotInSetPhotos,
                 extras='original_format,tags')
@@ -92,7 +87,7 @@ class FlickrStorage(RemoteStorage):
         """
         mkdirp(dest_path)
         photo = self._photos[file_info.id]
-        self._resiliently(photo.save, dest_path, size_label='Original')
+        self._resiliently.call(photo.save, dest_path, size_label='Original')
 
     def upload(self, src_path, folder_name, file_name, checksum):
         """
@@ -110,7 +105,7 @@ class FlickrStorage(RemoteStorage):
         if checksum:
             tags = '{} {}={}'.format(tags, CHECKSUM_PREFIX, checksum)
 
-        photo = self._resiliently(
+        photo = self._resiliently.call(
             flickr_api.upload,
             photo_file=src_path, 
             title=os.path.splitext(file_name)[0], 
@@ -123,10 +118,10 @@ class FlickrStorage(RemoteStorage):
         if folder_name:
             photoset = self._get_folder_by_name(folder_name)
             if not photoset:
-                self._resiliently(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
+                self._resiliently.call(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
                 self._photosets[photoset.id] = photoset
             else:
-                self._resiliently(photoset.addPhoto, photo=photo)
+                self._resiliently.call(photoset.addPhoto, photo=photo)
 
     def copy_file(self, file_info, folder_name, dest_storage):
         if isinstance(dest_storage, RemoteStorage):
@@ -186,13 +181,3 @@ class FlickrStorage(RemoteStorage):
             if e.message == 'The Flickr API keys have not been set':
                 print("Go to http://www.flickr.com/services/apps/create/apply and apply for an API key")
             sys.exit(1);
-
-    def _resiliently(self, func, *args, **kwargs):
-        return self._throttle(self._retry, func, *args, **kwargs)
-
-    def _throttle(self, func, *args, **kwargs):
-        return throttle(delay_sec=self._config.throttling)(func)(*args, **kwargs)
-
-    def _retry(self, func, *args, **kwargs):
-        return backoff.on_exception(backoff.expo, Exception, max_tries=self._config.retry)(func)(*args, **kwargs)
-
