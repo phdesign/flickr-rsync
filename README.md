@@ -318,3 +318,5 @@ $ flickr-rsync ./flickr --list-only
 * Webpage for successful Flickr login
 * Optimise - why does sort files seem to run faster?!
 * Fix duplicate albums issue
+* Use standard 'logging'
+* Why does it make 3 api calls for every photo in --list-only --list-sort mode?

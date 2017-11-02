@@ -49,7 +49,8 @@ setup(
         'flickr_api>=0.5beta',
         'argparse~=1.4.0',
         'rx~=1.5.9',
-        'futures~=3.1.1'
+        'futures~=3.1.1',
+        'backoff~=1.3.1'
     ] + additional_requires,
     dependency_links = [
       'https://github.com/alexis-mignon/python-flickr-api/tarball/6f3163b#egg=flickr_api-0.5beta'
