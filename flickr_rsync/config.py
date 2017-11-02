@@ -29,7 +29,7 @@ DEFAULTS = {
     'root_files': False,
     'dry_run': False,
     'throttling': 0.5,
-    'retry': 7,
+    'retry': 5,
     'api_key': '',
     'api_secret': '',
     'tags': __packagename__,
@@ -81,7 +81,7 @@ class Config(object):
         parser.add_argument('--throttling', type=float, metavar='SEC',
                             help='the delay in seconds (may be decimal) before each network call')
         parser.add_argument('--retry', type=int, metavar='NUM',
-                            help='the number of times to retry a network call before failing')
+                            help='the number of times to retry a network call (using exponential backoff) before failing')
         parser.add_argument('--api-key', type=str,
                             help='flickr API key')
         parser.add_argument('--api-secret', type=str,

@@ -304,6 +304,9 @@ $ flickr-rsync ./flickr --list-only
 
 ## Release notes
 
+### v1.0.4 (2 Nov 2017)
+* Improve retry and throttling, now uses exponential backoff
+
 ### v1.0.3 (16 Sep 2017)
 * Flickr converts .jpeg to .jpg extensions, so consider them the same when comparing for sync
 

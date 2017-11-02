@@ -118,7 +118,7 @@ class FlickrStorage(RemoteStorage):
         if folder_name:
             photoset = self._get_folder_by_name(folder_name)
             if not photoset:
-                self._resiliently.call(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
+                photoset = self._resiliently.call(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
                 self._photosets[photoset.id] = photoset
             else:
                 self._resiliently.call(photoset.addPhoto, photo=photo)
