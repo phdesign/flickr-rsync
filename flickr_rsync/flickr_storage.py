@@ -2,7 +2,6 @@ from __future__ import print_function
 import os, sys
 import re
 import webbrowser
-import time
 import datetime
 import logging
 import urllib2
@@ -26,6 +25,9 @@ logging.getLogger('backoff').setLevel(logging.DEBUG)
 _static_config = None
 def _get_configured_delay():
     return _static_config.throttling
+
+def _get_configured_retry():
+    return _static_config.retry
 
 class FlickrStorage(RemoteStorage):
 
@@ -187,27 +189,27 @@ class FlickrStorage(RemoteStorage):
             sys.exit(1);
 
     @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=5)
+    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=_get_configured_retry)
     def _getUserPhotosetsWithRetry(self, user):
         return flickr_api.objects.Walker(user.getPhotosets)
 
     @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=5)
+    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=_get_configured_retry)
     def _getPhotosInPhotosetWithRetry(self, photoset):
         return flickr_api.objects.Walker(photoset.getPhotos, extras='original_format,tags')
 
     @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=5)
+    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=_get_configured_retry)
     def _getPhotosNotInPhotosetWithRetry(self, user):
         return flickr_api.objects.Walker(user.getNotInSetPhotos, extras='original_format,tags')
 
     @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=5)
+    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=_get_configured_retry)
     def _downloadPhotoWithRetry(self, dest_path, photo):
         photo.save(dest_path, size_label='Original')
 
     @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=5)
+    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=_get_configured_retry)
     def _uploadPhotoWithRetry(self, src_path, file_name, tags, is_public, is_friend, is_family):
         return flickr_api.upload(
             photo_file=src_path, 
@@ -219,12 +221,12 @@ class FlickrStorage(RemoteStorage):
             async=0)
         
     @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=5)
+    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=_get_configured_retry)
     def _createFolderWithRetry(self, folder_name, primary_photo):
         return flickr_api.Photoset.create(title=folder_name, primary_photo=primary_photo)
 
     @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=5)
+    @backoff.on_exception(backoff.expo, urllib2.URLError, max_tries=_get_configured_retry)
     def _addPhotoToFolderWithRetry(self, photoset, photo):
         photoset.addPhoto(photo=photo)
 

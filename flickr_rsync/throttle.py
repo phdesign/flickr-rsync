@@ -1,6 +1,7 @@
 from __future__ import print_function
 import time
 from functools import wraps
+from verbose import vprint
 
 def _maybe_call(f, *args, **kwargs):
     return f(*args, **kwargs) if callable(f) else f
@@ -15,7 +16,7 @@ def throttle(delay_sec=0):
             if delay_sec_ > 0 and _last_call != None:
                 delay = delay_sec_ - (time.time() - _last_call)
                 if delay > 0:
-                    print('Throttle: sleeping for {} seconds'.format(delay))
+                    vprint('Throttle: sleeping for {} seconds'.format(delay))
                     time.sleep(delay)
             _last_call = time.time()
             return func(*args, **kwargs)
