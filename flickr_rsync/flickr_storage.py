@@ -70,7 +70,7 @@ class FlickrStorage(RemoteStorage):
         else:
             walker = self._resiliently(
                 flickr_api.objects.Walker,
-                user.getNotInSetPhotos,
+                self._user.getNotInSetPhotos,
                 extras='original_format,tags')
 
         for photo in walker:
