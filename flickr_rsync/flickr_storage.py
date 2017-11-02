@@ -21,18 +21,9 @@ OAUTH_PERMISSIONS = 'write'
 logging.getLogger('backoff').addHandler(logging.StreamHandler())
 logging.getLogger('backoff').setLevel(logging.DEBUG)
 
-_static_config = None
-def _get_configured_delay():
-    return _static_config.throttling
-
-def _get_configured_retry():
-    return _static_config.retry
-
 class FlickrStorage(RemoteStorage):
 
     def __init__(self, config):
-        global _static_config
-        _static_config = config
         self._config = config
         self._is_authenticated = False
         self._user = None
@@ -48,7 +39,7 @@ class FlickrStorage(RemoteStorage):
         """
         self._authenticate()
 
-        walker = self._getUserPhotosetsWithRetry(self._user)
+        walker = self._resiliently(flickr_api.objects.Walker, self._user.getPhotosets)
         for photoset in walker:
             self._photosets[photoset.id] = photoset
             folder = FolderInfo(id=photoset.id, name=photoset.title.encode('utf-8'))
@@ -72,9 +63,15 @@ class FlickrStorage(RemoteStorage):
         self._authenticate()
 
         if not folder.is_root:
-            walker = self._getPhotosInPhotosetWithRetry(self._photosets[folder.id])
+            walker = self._resiliently(
+                flickr_api.objects.Walker,
+                self._photosets[folder.id].getPhotos,
+                extras='original_format,tags')
         else:
-            walker = self._getPhotosNotInPhotosetWithRetry(self._user)
+            walker = self._resiliently(
+                flickr_api.objects.Walker,
+                user.getNotInSetPhotos,
+                extras='original_format,tags')
 
         for photo in walker:
             self._photos[photo.id] = photo
@@ -95,7 +92,7 @@ class FlickrStorage(RemoteStorage):
         """
         mkdirp(dest_path)
         photo = self._photos[file_info.id]
-        self._downloadPhotoWithRetry(dest_path, photo)
+        self._resiliently(photo.save, dest_path, size_label='Original')
 
     def upload(self, src_path, folder_name, file_name, checksum):
         """
@@ -112,21 +109,24 @@ class FlickrStorage(RemoteStorage):
         tags = self._config.tags
         if checksum:
             tags = '{} {}={}'.format(tags, CHECKSUM_PREFIX, checksum)
-        photo = self._uploadPhotoWithRetry(
-            src_path,
-            file_name,
-            tags,
-            self._config.is_public,
-            self._config.is_friend,
-            self._config.is_family)
+
+        photo = self._resiliently(
+            flickr_api.upload,
+            photo_file=src_path, 
+            title=os.path.splitext(file_name)[0], 
+            tags=tags.strip(),
+            is_public=self._config.is_public,
+            is_friend=self._config.is_friend,
+            is_family=self._config.is_family,
+            async=0)
 
         if folder_name:
             photoset = self._get_folder_by_name(folder_name)
             if not photoset:
-                self._createFolderWithRetry(folder_name, photo)
+                self._resiliently(flickr_api.Photoset.create, title=folder_name, primary_photo=photo)
                 self._photosets[photoset.id] = photoset
             else:
-                self._addPhotoToFolderWithRetry(photoset, photo)
+                self._resiliently(photoset.addPhoto, photo=photo)
 
     def copy_file(self, file_info, folder_name, dest_storage):
         if isinstance(dest_storage, RemoteStorage):
@@ -187,46 +187,12 @@ class FlickrStorage(RemoteStorage):
                 print("Go to http://www.flickr.com/services/apps/create/apply and apply for an API key")
             sys.exit(1);
 
-    @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, Exception, max_tries=_get_configured_retry)
-    def _getUserPhotosetsWithRetry(self, user):
-        return flickr_api.objects.Walker(user.getPhotosets)
+    def _resiliently(self, func, *args, **kwargs):
+        return self._throttle(self._retry, func, *args, **kwargs)
 
-    @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, Exception, max_tries=_get_configured_retry)
-    def _getPhotosInPhotosetWithRetry(self, photoset):
-        return flickr_api.objects.Walker(photoset.getPhotos, extras='original_format,tags')
+    def _throttle(self, func, *args, **kwargs):
+        return throttle(delay_sec=self._config.throttling)(func)(*args, **kwargs)
 
-    @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, Exception, max_tries=_get_configured_retry)
-    def _getPhotosNotInPhotosetWithRetry(self, user):
-        return flickr_api.objects.Walker(user.getNotInSetPhotos, extras='original_format,tags')
-
-    @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, Exception, max_tries=_get_configured_retry)
-    def _downloadPhotoWithRetry(self, dest_path, photo):
-        photo.save(dest_path, size_label='Original')
-
-    @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, Exception, max_tries=_get_configured_retry)
-    def _uploadPhotoWithRetry(self, src_path, file_name, tags, is_public, is_friend, is_family):
-        return flickr_api.upload(
-            photo_file=src_path, 
-            title=os.path.splitext(file_name)[0], 
-            tags=tags.strip(),
-            is_public=is_public,
-            is_friend=is_friend,
-            is_family=is_family,
-            async=0)
-        
-    @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, Exception, max_tries=_get_configured_retry)
-    def _createFolderWithRetry(self, folder_name, primary_photo):
-        return flickr_api.Photoset.create(title=folder_name, primary_photo=primary_photo)
-
-    @throttle(delay_sec=_get_configured_delay)
-    @backoff.on_exception(backoff.expo, Exception, max_tries=_get_configured_retry)
-    def _addPhotoToFolderWithRetry(self, photoset, photo):
-        photoset.addPhoto(photo=photo)
-
+    def _retry(self, func, *args, **kwargs):
+        return backoff.on_exception(backoff.expo, Exception, max_tries=self._config.retry)(func)(*args, **kwargs)
 
