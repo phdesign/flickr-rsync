@@ -313,13 +313,16 @@ $ flickr-rsync ./flickr --list-only
 
 ## TODO
 
-* Handle nested directories (merge with separator)
+* Handle nested directories (merge with separator) (apply --include-dir after merging)
 * List duplicate files
 * Use checksum matching to avoid uploading duplicate files
-* Multi-threading
+* Multi-threading - is it needed?
 * Use search to make a filtered lokup faster, is this even possible?
 * Webpage for successful Flickr login
 * Optimise - why does sort files seem to run faster?!
 * Fix duplicate albums issue
 * Use standard 'logging'
+* Output verbose messages to terminal even when piping
 * Why does it make 3 api calls for every photo in --list-only --list-sort mode?
+* --include and --exclude should only work on filenames not paths
+* --mirror. Yep, delete photos from target, but don't make it easy

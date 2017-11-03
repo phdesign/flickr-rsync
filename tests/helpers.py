@@ -23,7 +23,7 @@ def setup_storage(storage, folders):
 
 def assert_has_calls_exactly(mock, calls, any_order=False):
     mock.assert_has_calls(calls, any_order=any_order)
-    if mock.call_count != len(calls):
-        raise AssertionError("Expected '{}' to be called {} times. Called {} times.".format(mock._mock_name, mock.call_count, len(calls)))
+    assert (mock.call_count == len(calls),
+            "Expected '{}' to be called {} times. Called {} times.".format(mock._mock_name, mock.call_count, len(calls)))
 
 NonCallableMock.assert_has_calls_exactly = assert_has_calls_exactly

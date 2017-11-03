@@ -25,7 +25,7 @@ def readme():
 
 def test_suite():
     test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover('tests', pattern='*_test.py')
+    test_suite = test_loader.discover('tests', pattern='resiliently_test.py')
     return test_suite
 
 additional_requires = []

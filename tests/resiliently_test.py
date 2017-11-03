@@ -11,8 +11,8 @@ from flickr_rsync.resiliently import Resiliently
 class ResilientlyTest(unittest.TestCase):
 
     def setUp(self):
-        self.print_patch = patch('flickr_rsync.throttle.print', create=True)
-        self.mock_print = self.print_patch.start()
+        self.vprint_patch = patch('flickr_rsync.throttle.vprint', create=True)
+        self.mock_vprint = self.vprint_patch.start()
         self.sleep_patch = patch('flickr_rsync.throttle.time.sleep', create=True)
         self.mock_sleep = self.sleep_patch.start()
 
@@ -21,7 +21,7 @@ class ResilientlyTest(unittest.TestCase):
         self.callback.__name__ = 'foo'
 
     def tearDown(self):
-        self.print_patch.stop()
+        self.vprint_patch.stop()
         self.sleep_patch.stop()
 
     def test_should_make_remote_call(self):
@@ -43,7 +43,6 @@ class ResilientlyTest(unittest.TestCase):
             call('a', b='b')
         ])
 
-    @unittest.skip("")
     def test_should_retry_specified_times(self):
         self.config.retry = 3
         self.callback.side_effect = self.throw_errors(3)
@@ -57,12 +56,10 @@ class ResilientlyTest(unittest.TestCase):
             call('a', b='b'),
             call('a', b='b')
         ])
-        self.mock_sleep.assert_has_calls_exactly([
-            call(1),
-            call(3)
-        ])
+        self.assertEqual(self.mock_sleep.call_count, 3,
+            "Expected call_count of {}, was {}. Recieved {}".format(
+                3, self.mock_sleep.call_count, self.mock_sleep.call_args_list))
 
-    @unittest.skip("")
     def test_should_fail_once_retry_exceeded(self):
         self.config.retry = 2
         self.callback.side_effect = self.throw_errors(3)
@@ -78,7 +75,7 @@ class ResilientlyTest(unittest.TestCase):
 
     @unittest.skip("")
     def test_should_throttle_consecutive_calls(self):
-        time_patch = patch('flickr_rsync.flickr_storage.time.time', create=True)
+        time_patch = patch('flickr_rsync.throttle.time.time', create=True)
         mock_time = time_patch.start()
         self.config.throttling = 10
         resiliently = Resiliently(self.config)
