@@ -92,9 +92,29 @@ class ResilientlyTest(unittest.TestCase):
         ])
         time_patch.stop()
 
-    @unittest.skip("")
+    def test_should_throttle_consecutive_calls_across_multiple_functions(self):
+        time_patch = patch('flickr_rsync.throttle.time.time', create=True)
+        mock_time = time_patch.start()
+        self.config.throttling = 10
+        callback2 = MagicMock()
+        callback2.__name__ = 'bar'
+        resiliently = Resiliently(self.config)
+
+        mock_time.return_value = 0
+        resiliently.call(self.callback, 'a', b='b')
+        mock_time.return_value = 1
+        resiliently.call(callback2, 'a', b='b')
+        mock_time.return_value = 6
+        resiliently.call(self.callback, 'a', b='b')
+
+        self.mock_sleep.assert_has_calls_exactly([
+            call(9),
+            call(5)
+        ])
+        time_patch.stop()
+
     def test_should_not_throttle_if_timeout_passed(self):
-        time_patch = patch('flickr_rsync.flickr_storage.time.time', create=True)
+        time_patch = patch('flickr_rsync.throttle.time.time', create=True)
         mock_time = time_patch.start()
         self.config.throttling = 10
         resiliently = Resiliently(self.config)

@@ -17,15 +17,21 @@ from verbose import vprint
 def _maybe_call(f, *args, **kwargs):
     return f(*args, **kwargs) if callable(f) else f
 
+class HistoryItem(object):
+    def __init__(self, func):
+        self.func = func
+        self.last_call = None
+
+history = []
 def throttle(delay_sec=0):
-    print('Init decorator')
-    class state:
-        last_call = None
     def decorator(func):
+        state = next((x for x in history if x.func == func), None)
+        if state == None:
+            state = HistoryItem(func)
+            history.append(state)
         @wraps(func)
         def wrapper(*args, **kwargs):
             delay_sec_ = _maybe_call(delay_sec)
-            print('_last_call: {}'.format(state.last_call))
             if delay_sec_ > 0 and state.last_call != None:
                 delay = delay_sec_ - (time.time() - state.last_call)
                 if delay > 0:
