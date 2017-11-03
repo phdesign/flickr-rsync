@@ -73,7 +73,6 @@ class ResilientlyTest(unittest.TestCase):
             call('a', b='b')
         ])
 
-    @unittest.skip("")
     def test_should_throttle_consecutive_calls(self):
         time_patch = patch('flickr_rsync.throttle.time.time', create=True)
         mock_time = time_patch.start()
