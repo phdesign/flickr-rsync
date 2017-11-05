@@ -4,12 +4,11 @@ import backoff
 from throttle import throttle
 from config import __packagename__
 
-logging.getLogger('backoff').addHandler(logging.StreamHandler())
-logging.getLogger('backoff').setLevel(logging.DEBUG)
-
 class Resiliently(object):
     def __init__(self, config):
         self._config = config
+        if config.verbose:
+            logging.getLogger('backoff').addHandler(logging.StreamHandler())
 
     def call(self, func, *args, **kwargs):
         return self._throttle(self._retry, func, *args, **kwargs)

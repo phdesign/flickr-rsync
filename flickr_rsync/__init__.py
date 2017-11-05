@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os, sys
 import urllib2
+import logging
 
 from storage import Storage
 from config import Config
@@ -11,6 +12,8 @@ from local_storage import LocalStorage
 from fake_storage import FakeStorage
 from tree_walker import TreeWalker
 from csv_walker import CsvWalker
+
+logger = logging.getLogger(__name__)
 
 def _get_storage(config, path):
     if path.lower() == Config.PATH_FLICKR:

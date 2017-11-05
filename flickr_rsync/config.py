@@ -96,8 +96,9 @@ class Config(object):
         parser.set_defaults(**self._read_ini(ini_path))
         self._args = parser.parse_args()
 
-        logging.basicConfig(format='%(message)s')
-        logging.getLogger(__name__.split('.')[0]).setLevel(logging.DEBUG if self.verbose else logging.INFO)
+        rootLogger = logging.getLogger(__name__.split('.')[0])
+        rootLogger.addHandler(logging.StreamHandler())
+        rootLogger.setLevel(logging.DEBUG if self.verbose else logging.INFO)
         if ini_path:
             logger.debug("using config file {}".format(ini_path))
         else:
