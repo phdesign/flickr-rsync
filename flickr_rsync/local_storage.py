@@ -5,10 +5,12 @@ import glob
 import itertools
 import hashlib
 import shutil
+import logging
 from storage import Storage, RemoteStorage
 from file_info import FileInfo
 from folder_info import FolderInfo
-from verbose import vprint
+
+logger = logging.getLogger(__name__)
 
 def mkdirp(path):
     """
@@ -41,7 +43,7 @@ class LocalStorage(Storage):
             return m.hexdigest()
 
     def list_folders(self):
-        vprint("using base folder {}".format(self.path))
+        logger.debug("copying files from {}".format(self.path))
         return [
             FolderInfo(id=i, name=name.encode('utf-8'), full_path=path.encode('utf-8'))
             for i, (name, path) in enumerate((x, os.path.join(self.path, x)) for x in os.listdir(self.path))

@@ -14,6 +14,8 @@ class TreeWalkerTest(unittest.TestCase):
     def setUp(self):
         self.print_patch = patch('flickr_rsync.tree_walker.print', create=True)
         self.mock_print = self.print_patch.start()
+        self.logger_patch = patch('flickr_rsync.tree_walker.logger', create=True)
+        self.mock_logger = self.logger_patch.start()
         self.time_patch = patch('flickr_rsync.tree_walker.time.time', create=True)
         self.time_patch.start().return_value = 0
 
@@ -33,6 +35,7 @@ class TreeWalkerTest(unittest.TestCase):
 
     def tearDown(self):
         self.print_patch.stop()
+        self.logger_patch.stop()
         self.time_patch.stop()
 
     def test_should_print_wrapper_only_given_no_folders(self):
@@ -40,7 +43,8 @@ class TreeWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_called_once_with("0 directories, 0 files read in 0.0 sec")
+        self.mock_print.assert_not_called()
+        self.mock_logger.info.assert_called_once_with("0 directories, 0 files read in 0.0 sec")
 
     def test_should_print_wrapper_only_given_empty_folders(self):
         walker = TreeWalker(self.config, self.storage)
@@ -51,7 +55,8 @@ class TreeWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_called_once_with("0 directories, 0 files (excluding 1 empty directories) read in 0.0 sec")
+        self.mock_print.assert_not_called()
+        self.mock_logger.info.assert_called_once_with("0 directories, 0 files (excluding 1 empty directories) read in 0.0 sec")
 
     def test_should_print_root_files_given_root_files_enabled(self):
         self.config.root_files = True
@@ -64,9 +69,9 @@ class TreeWalkerTest(unittest.TestCase):
 
         self.mock_print.assert_has_calls_exactly([
             call(u"├─── A File".encode('utf-8')),
-            call(u"└─── B File".encode('utf-8')),
-            call("0 directories, 2 files read in 0.0 sec")
+            call(u"└─── B File".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("0 directories, 2 files read in 0.0 sec")
 
     @unittest.skip("Ligitimately broken, I just don't have a good fix for it")
     def test_should_not_print_connector_when_printing_root_files_given_folders_are_hidden(self):
@@ -81,9 +86,9 @@ class TreeWalkerTest(unittest.TestCase):
 
         self.mock_print.assert_has_calls_exactly([
             call(u"├─── A File".encode('utf-8')),
-            call(u"└─── B File".encode('utf-8')),
-            call("0 directories, 2 files (excluding 1 empty directories) read in 0.0 sec")
+            call(u"└─── B File".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("0 directories, 2 files (excluding 1 empty directories) read in 0.0 sec")
 
     def test_should_not_print_root_files_given_root_files_disabled(self):
         self.config.root_files = False
@@ -94,7 +99,8 @@ class TreeWalkerTest(unittest.TestCase):
 
         walker.walk()
 
-        self.mock_print.assert_called_once_with("0 directories, 0 files read in 0.0 sec")
+        self.mock_print.assert_not_called()
+        self.mock_logger.info.assert_called_once_with("0 directories, 0 files read in 0.0 sec")
 
     def test_should_print_root_files_given_root_files_enabled_and_folders_exist(self):
         self.config.root_files = True
@@ -111,9 +117,9 @@ class TreeWalkerTest(unittest.TestCase):
             call(u"├─── C File [abc123]".encode('utf-8')),
             call(u"│   ".encode('utf-8')),
             call(u"└─── A Folder".encode('utf-8')),
-            call(u"    └─── A File".encode('utf-8')),
-            call("1 directories, 2 files read in 0.0 sec")
+            call(u"    └─── A File".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("1 directories, 2 files read in 0.0 sec")
 
     def test_should_print_folder_files(self):
         walker = TreeWalker(self.config, self.storage)
@@ -126,9 +132,9 @@ class TreeWalkerTest(unittest.TestCase):
         self.mock_print.assert_has_calls([
             call(u"└─── A Folder".encode('utf-8')),
             call(u"    ├─── A File".encode('utf-8')),
-            call(u"    └─── B File".encode('utf-8')),
-            call("1 directories, 2 files read in 0.0 sec")
+            call(u"    └─── B File".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("1 directories, 2 files read in 0.0 sec")
 
     def test_should_print_all_folders(self):
         walker = TreeWalker(self.config, self.storage)
@@ -144,9 +150,9 @@ class TreeWalkerTest(unittest.TestCase):
             call(u"│   └─── A File".encode('utf-8')),
             call(u"│   ".encode('utf-8')),
             call(u"└─── B Folder".encode('utf-8')),
-            call(u"    └─── B File".encode('utf-8')),
-            call("2 directories, 2 files read in 0.0 sec")
+            call(u"    └─── B File".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("2 directories, 2 files read in 0.0 sec")
 
     def test_should_print_checksum_given_file_has_checksum(self):
         walker = TreeWalker(self.config, self.storage)
@@ -158,9 +164,9 @@ class TreeWalkerTest(unittest.TestCase):
 
         self.mock_print.assert_has_calls([
             call(u"└─── A Folder".encode('utf-8')),
-            call(u"    └─── C File [abc123]".encode('utf-8')),
-            call("1 directories, 1 files read in 0.0 sec")
+            call(u"    └─── C File [abc123]".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("1 directories, 1 files read in 0.0 sec")
 
     def test_should_sort_folders_and_files_given_sort_enabled(self):
         self.config.list_sort = True
@@ -178,9 +184,9 @@ class TreeWalkerTest(unittest.TestCase):
             call(u"│   ".encode('utf-8')),
             call(u"└─── B Folder".encode('utf-8')),
             call(u"    ├─── B File".encode('utf-8')),
-            call(u"    └─── C File [abc123]".encode('utf-8')),
-            call("2 directories, 3 files read in 0.0 sec")
+            call(u"    └─── C File [abc123]".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("2 directories, 3 files read in 0.0 sec")
 
     def test_should_not_sort_folders_and_files_given_sort_disabled(self):
         self.config.list_sort = False
@@ -198,9 +204,9 @@ class TreeWalkerTest(unittest.TestCase):
             call(u"│   └─── B File".encode('utf-8')),
             call(u"│   ".encode('utf-8')),
             call(u"└─── A Folder".encode('utf-8')),
-            call(u"    └─── A File".encode('utf-8')),
-            call("2 directories, 3 files read in 0.0 sec")
+            call(u"    └─── A File".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("2 directories, 3 files read in 0.0 sec")
 
     def test_should_print_only_folders_given_list_folders_enabled(self):
         self.config.list_folders = True
@@ -214,9 +220,9 @@ class TreeWalkerTest(unittest.TestCase):
 
         self.mock_print.assert_has_calls([
             call(u"├─── B Folder".encode('utf-8')),
-            call(u"└─── A Folder".encode('utf-8')),
-            call("2 directories read in 0.0 sec")
+            call(u"└─── A Folder".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("2 directories read in 0.0 sec")
 
     def test_should_sort_folders_and_files_given_sort_enabled(self):
         self.config.list_sort = True
@@ -231,9 +237,9 @@ class TreeWalkerTest(unittest.TestCase):
 
         self.mock_print.assert_has_calls([
             call(u"├─── A Folder".encode('utf-8')),
-            call(u"└─── B Folder".encode('utf-8')),
-            call("2 directories read in 0.0 sec")
+            call(u"└─── B Folder".encode('utf-8'))
         ])
+        self.mock_logger.info.assert_called_once_with("2 directories read in 0.0 sec")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

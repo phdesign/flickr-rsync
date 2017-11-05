@@ -11,8 +11,6 @@ from flickr_rsync.resiliently import Resiliently
 class ResilientlyTest(unittest.TestCase):
 
     def setUp(self):
-        self.vprint_patch = patch('flickr_rsync.throttle.vprint', create=True)
-        self.mock_vprint = self.vprint_patch.start()
         self.sleep_patch = patch('flickr_rsync.throttle.time.sleep', create=True)
         self.mock_sleep = self.sleep_patch.start()
 
@@ -21,7 +19,6 @@ class ResilientlyTest(unittest.TestCase):
         self.callback.__name__ = 'foo'
 
     def tearDown(self):
-        self.vprint_patch.stop()
         self.sleep_patch.stop()
 
     def test_should_make_remote_call(self):

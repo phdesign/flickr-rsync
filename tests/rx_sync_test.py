@@ -14,8 +14,6 @@ class SyncTestBase(unittest.TestCase):
     def setUp(self):
         self.print_patch = patch('flickr_rsync.rx_sync.print')
         self.mock_print = self.print_patch.start()
-        self.vprint_patch = patch('flickr_rsync.rx_sync.vprint', create=True)
-        self.mock_vprint = self.vprint_patch.start()
 
         self.config = MagicMock()
         self.config.dry_run = False
@@ -35,7 +33,6 @@ class SyncTestBase(unittest.TestCase):
 
     def tearDown(self):
         self.print_patch.stop()
-        self.vprint_patch.stop()
 
 class SyncTest(SyncTestBase):
 

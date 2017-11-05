@@ -2,12 +2,13 @@ from __future__ import print_function
 import os, sys
 import ConfigParser
 import argparse
+import logging
 from distutils.util import strtobool
 from _version import __version__
 
 __packagename__ = 'flickr-rsync'
-
 CONFIG_FILENAME = __packagename__ + '.ini'
+logger = logging.getLogger(__name__)
 
 FILES_SECTION = 'Files'
 FLICKR_SECTION = 'Flickr'
@@ -94,12 +95,13 @@ class Config(object):
         ini_path = self.locate_datafile(CONFIG_FILENAME)
         parser.set_defaults(**self._read_ini(ini_path))
         self._args = parser.parse_args()
-        
-        if self.verbose:
-            if ini_path:
-                print("using config file {}".format(ini_path))
-            else:
-                print("no config file found")
+
+        logging.basicConfig(format='%(message)s')
+        logging.getLogger(__name__.split('.')[0]).setLevel(logging.DEBUG if self.verbose else logging.INFO)
+        if ini_path:
+            logger.debug("using config file {}".format(ini_path))
+        else:
+            logger.debug("no config file found, using default settings")
 
     def locate_datafile(self, filename):
         def file_locations(filename):

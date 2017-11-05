@@ -2,11 +2,13 @@ from __future__ import print_function
 import os
 import operator
 import time
+import logging
 from threading import current_thread
 from rx import Observable, AnonymousObservable
 from rx.internal import extensionmethod
-from verbose import vprint
 from root_folder_info import RootFolderInfo
+
+logger = logging.getLogger(__name__)
 
 @extensionmethod(Observable)
 def when_complete(self):
@@ -30,8 +32,8 @@ class RxSync(object):
 
     def run(self):
         if self._config.dry_run:
-            print("dry run enabled, no files will be copied")
-        print("building folder list...")
+            logger.info("dry run enabled, no files will be copied")
+        logger.info("building folder list...")
         start = time.time()
 
         dest_folders = {folder.name.lower(): folder for folder in self._dest.list_folders()}
@@ -54,7 +56,7 @@ class RxSync(object):
             .publish().auto_connect(2)
         pending \
             .subscribe(lambda x: self._copy_file(**x) if not x['exists'] else
-                vprint("{}...skipped, file exists".format(x['path'])))
+                logger.debug("{}...skipped, file exists".format(x['path'])))
 
         # Count files, print summary
         skipped_count = pending.count(lambda x: x['exists'])
@@ -65,7 +67,7 @@ class RxSync(object):
 
     def _expand_folder(self, src, dest):
         is_merging = dest != None
-        vprint("{} {} [{}]".format("merging" if is_merging else "copying", 
+        logger.debug("{} {} [{}]".format("merging" if is_merging else "copying", 
             src.name if not src.is_root else 'root', current_thread().name))
         dest_files = [f.name.lower() for f in self._dest.list_files(dest)] if is_merging else []
         source = Observable.from_(self._src.list_files(src))
@@ -80,8 +82,8 @@ class RxSync(object):
         print(path)
         if not self._config.dry_run:
             self._src.copy_file(file, folder and folder.name, self._dest)
-        vprint("{}...copied [{}]".format(path, current_thread().name))
+        logger.debug("{}...copied [{}]".format(path, current_thread().name))
 
     def _print_summary(self, elapsed, files_copied, files_skipped):
         skipped_msg = ", skipped {} files(s) that already exist".format(files_skipped) if files_skipped > 0 else ''
-        print("\ntransferred {} file(s){} in {} sec".format(files_copied, skipped_msg, round(elapsed, 2)))
+        logger.info("\ntransferred {} file(s){} in {} sec".format(files_copied, skipped_msg, round(elapsed, 2)))

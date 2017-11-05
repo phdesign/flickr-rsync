@@ -10,6 +10,7 @@ class FakeStorage(Storage):
     fake_count = 0
 
     def __init__(self, config):
+        self.path = ''
         self._config = config
         self.prefix = '' if FakeStorage.fake_count == 0 else str(FakeStorage.fake_count)
         FakeStorage.fake_count += 1

@@ -11,9 +11,12 @@
 
 from __future__ import print_function
 import time
+import logging
 from functools import wraps
-from verbose import vprint
 
+logger = logging.getLogger(__name__)
+
+# Copied from 'backoff' project
 def _maybe_call(f, *args, **kwargs):
     return f(*args, **kwargs) if callable(f) else f
 
@@ -35,7 +38,7 @@ def throttle(delay_sec=0):
             if delay_sec_ > 0 and state.last_call != None:
                 delay = delay_sec_ - (time.time() - state.last_call)
                 if delay > 0:
-                    vprint('Throttle: sleeping for {} seconds'.format(delay))
+                    logger.debug('throttling function call, sleeping for {} seconds'.format(delay))
                     time.sleep(delay)
             state.last_call = time.time()
             return func(*args, **kwargs)

@@ -2,7 +2,6 @@ from __future__ import print_function
 import os, sys
 import urllib2
 
-import verbose as verbose
 from storage import Storage
 from config import Config
 from sync import Sync
@@ -39,7 +38,6 @@ def main():
     try:
         config = Config()
         config.read()
-        verbose.set_config(config)
 
         src_storage = _get_storage(config, config.src)
         if config.list_only or config.list_folders:
@@ -51,7 +49,7 @@ def main():
             sync.run()
 
     except urllib2.URLError as e:
-        print("Error connecting to server. {!r}".format(e))
+        logger.error("Error connecting to server. {!r}".format(e))
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit()

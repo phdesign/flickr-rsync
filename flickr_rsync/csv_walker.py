@@ -1,9 +1,12 @@
 from __future__ import print_function
 import multiprocessing
 import time
+import logging
 from rx import Observable
 from walker import Walker
 from root_folder_info import RootFolderInfo
+
+logger = logging.getLogger(__name__)
 
 class CsvWalker(Walker):
     
@@ -40,5 +43,5 @@ class CsvWalker(Walker):
         print("{}, {}, {}".format(folder.name if folder else '', fileinfo.name, fileinfo.checksum))
 
     def _print_summary(self, elapsed):
-        print("\ndone in {} sec".format(round(elapsed, 2)))
+        logger.info("\ndone in {} sec".format(round(elapsed, 2)))
 

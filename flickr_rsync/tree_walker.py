@@ -2,6 +2,7 @@
 from __future__ import print_function
 import operator
 import time
+import logging
 from rx import Observable, AnonymousObservable
 from rx.internal import extensionmethod
 from walker import Walker
@@ -11,6 +12,7 @@ UNICODE_LEAF = u"├─── ".encode('utf-8')
 UNICODE_LAST_LEAF = u"└─── ".encode('utf-8')
 UNICODE_BRANCH = u"│   ".encode('utf-8')
 UNICODE_LAST_BRANCH = "    "
+logger = logging.getLogger(__name__)
 
 @extensionmethod(Observable)
 def is_last(source):
@@ -112,7 +114,7 @@ class TreeWalker(Walker):
             print(UNICODE_BRANCH)
 
     def _print_summary(self, elapsed, file_count, folder_count, hidden_folder_count):
-        print("{} directories{}{} read in {} sec".format(folder_count, 
+        logger.info("{} directories{}{} read in {} sec".format(folder_count, 
             ", {} files".format(file_count) if not self._config.list_folders else "",
             " (excluding {} empty directories)".format(hidden_folder_count) if hidden_folder_count > 0 else "",
             round(elapsed, 2)))
