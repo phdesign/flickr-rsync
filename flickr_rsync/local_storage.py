@@ -59,7 +59,7 @@ class LocalStorage(Storage):
                 full_path=path.encode('utf-8'), 
                 checksum=self.md5_checksum(path) if self._config.checksum else None)
             for i, (name, path) in enumerate((x, os.path.join(folder_abs, x)) for x in os.listdir(folder_abs))
-            if self._should_include(path, self._config.include, self._config.exclude) and os.path.isfile(path)
+            if self._should_include(name, self._config.include, self._config.exclude) and os.path.isfile(path)
         ]
 
     def copy_file(self, file_info, folder_name, dest_storage):

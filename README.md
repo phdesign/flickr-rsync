@@ -129,12 +129,12 @@ Files are matched by folder names and file names. E.g. if you have a Flickr phot
 
 Filtering is done using regular expressions. The following four options control filtering the files:
 
-* `--include=` specifies a pattern that **file paths** must match to be included in the operation
+* `--include=` specifies a pattern that **file names** must match to be included in the operation
 * `--include-dir=` specifies a pattern that **folder names** must match to be included in the operation
-* `--exclude=` specifies a pattern that **file paths** must NOT match to be included in the operation
+* `--exclude=` specifies a pattern that **file names** must NOT match to be included in the operation
 * `--exclude-dir=` specifies a pattern that **folder names** must NOT match to be included in the operation
 
-Note that filtering by folders is more performant than by file paths, prefer folder name filtering where possible.
+Note that filtering by folders is more performant than by file names, prefer folder name filtering where possible.
 
 Also note that exclude filters take preference and will override include filters.
 
@@ -318,10 +318,8 @@ $ flickr-rsync ./flickr --list-only
 * List duplicate files
 * Use checksum matching to avoid uploading duplicate files
 * Multi-threading - is it needed?
-* Use search to make a filtered lokup faster, is this even possible?
 * Webpage for successful Flickr login
 * Optimise - why does sort files seem to run faster?!
 * Fix duplicate albums issue
 * Why does it make 3 api calls for every photo in --list-only --list-sort mode?
-* --include and --exclude should only work on filenames not paths
 * --mirror. Yep, delete photos from target, but don't make it easy

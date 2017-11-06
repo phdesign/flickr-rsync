@@ -100,9 +100,12 @@ class Config(object):
         rootLogger.addHandler(logging.StreamHandler())
         rootLogger.setLevel(logging.DEBUG if self.verbose else logging.INFO)
         if ini_path:
-            logger.debug("using config file {}".format(ini_path))
+            logger.debug('using config file {}'.format(ini_path))
+            logger.debug('\neffective settings:\n-------------------')
+            logger.debug('\n'.join('{}={}'.format(k,v) for k,v in sorted(vars(self._args).items())))
+            logger.debug('-------------------\n')
         else:
-            logger.debug("no config file found, using default settings")
+            logger.debug('no config file found, using default settings')
 
     def locate_datafile(self, filename):
         def file_locations(filename):

@@ -3,6 +3,7 @@ import os, sys
 import re
 import webbrowser
 import datetime
+import logging
 from storage import RemoteStorage
 import flickr_api
 from flickr_api.api import flickr
@@ -14,6 +15,7 @@ from config import __packagename__
 TOKEN_FILENAME = __packagename__ + '.token'
 CHECKSUM_PREFIX = 'checksum:md5'
 OAUTH_PERMISSIONS = 'write'
+logger = logging.getLogger(__name__)
 
 class FlickrStorage(RemoteStorage):
 
