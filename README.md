@@ -306,6 +306,7 @@ $ flickr-rsync ./flickr --list-only
 
 ### v1.0.4 (2 Nov 2017)
 * Improve retry and throttling, now uses exponential backoff
+* Use python logging framework, outputs log messages to stderr
 
 ### v1.0.3 (16 Sep 2017)
 * Flickr converts .jpeg to .jpg extensions, so consider them the same when comparing for sync
@@ -321,8 +322,6 @@ $ flickr-rsync ./flickr --list-only
 * Webpage for successful Flickr login
 * Optimise - why does sort files seem to run faster?!
 * Fix duplicate albums issue
-* Use standard 'logging'
-* Output verbose messages to terminal even when piping
 * Why does it make 3 api calls for every photo in --list-only --list-sort mode?
 * --include and --exclude should only work on filenames not paths
 * --mirror. Yep, delete photos from target, but don't make it easy

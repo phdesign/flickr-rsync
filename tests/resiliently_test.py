@@ -15,6 +15,7 @@ class ResilientlyTest(unittest.TestCase):
         self.mock_sleep = self.sleep_patch.start()
 
         self.config = MagicMock()
+        self.config.verbose = False
         self.callback = MagicMock()
         self.callback.__name__ = 'foo'
 
