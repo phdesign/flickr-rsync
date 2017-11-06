@@ -323,3 +323,4 @@ $ flickr-rsync ./flickr --list-only
 * Fix duplicate albums issue
 * Why does it make 3 api calls for every photo in --list-only --list-sort mode?
 * --mirror. Yep, delete photos from target, but don't make it easy
+* --init to setup a new .ini file and walk through auth process
