@@ -13,7 +13,26 @@ from local_storage import mkdirp
 from config import __packagename__
 
 TOKEN_FILENAME = __packagename__ + '.token'
+"""
+About Tags
+----------
+
+Normal Tags
+With normal tags, the accepted characters for uniqueness checking are [A-Za-z0-9] (in regex form) - so all other 
+characters are stripped out (and uppercase characters are downcased eg: A->a) *but* they're maintained for 
+"viewing" (reading) - a way of maintaining ease of use for users and ease of indexing/searching etc for the system.
+
+Machine Tags
+Have been developed to support intra-application tagging (eg: delicious, upcoming, last.fm, dopplr and more).
+They have the following structure:
+namespace:predicate=value
+
+a namespace, i.e. upcoming [who is going to care about this tag]
+a predicate, i.e. event [what does this apply to]
+a value, i.e. 123456 [which one is this]
+"""
 CHECKSUM_PREFIX = 'checksum:md5'
+EXTENSION_PREFIX = 'flickrrsync:extn'
 OAUTH_PERMISSIONS = 'write'
 logger = logging.getLogger(__name__)
 
@@ -89,7 +108,9 @@ class FlickrStorage(RemoteStorage):
         """
         mkdirp(dest_path)
         photo = self._photos[file_info.id]
-        self._resiliently.call(photo.save, dest_path, size_label='Original')
+        is_video = photo.media == 'video'
+        size = 'Video Original' if is_video else 'Original'
+        self._resiliently.call(photo.save, dest_path, size_label=size)
 
     def upload(self, src_path, folder_name, file_name, checksum):
         """
@@ -103,7 +124,8 @@ class FlickrStorage(RemoteStorage):
         Raises:
             KeyError: If the file_info.id is unrecognised
         """
-        tags = self._config.tags
+        extension = os.path.splitext(file_name)[1][1:]
+        tags = '{} "{}={}"'.format(self._config.tags, EXTENSION_PREFIX, extension)
         if checksum:
             tags = '{} {}={}'.format(tags, CHECKSUM_PREFIX, checksum)
 
@@ -141,11 +163,16 @@ class FlickrStorage(RemoteStorage):
     def _get_file_info(self, photo):
         name = photo.title.encode('utf-8') if photo.title else photo.id
         checksum = None
-        if photo.originalformat:
-            name += "." + photo.originalformat
+        extension = None
         if photo.tags:
-            tags = photo.tags.split()
+            # If we've just pulled the photo, tags is a string, if we've inspected any properties like 'media', it becomes a list
+            tags = photo.tags.split() if isinstance(photo.tags, basestring) else [tag.text for tag in photo.tags]
             checksum = next((parts[1] for parts in (tag.split('=') for tag in tags) if parts[0] == CHECKSUM_PREFIX), None)
+            extension = next((parts[1] for parts in (tag.split('=') for tag in tags) if parts[0] == EXTENSION_PREFIX), None)
+        if not extension:
+            extension = photo.originalformat
+        if extension:
+            name += "." + extension
         return FileInfo(id=photo.id, name=name, checksum=checksum)
 
     def _should_include(self, name, include_pattern, exclude_pattern):

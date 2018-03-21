@@ -221,6 +221,37 @@ Then to uninstall
 $ python setup.py develop --uninstall
 ```
 
+## Debugging
+
+Use pdb
+
+```
+python -m pdb ./flickr_rsync/__main__.py <parameters>
+```
+
+Set a breakpoint
+
+```
+b ./flickr_rsync/flickr_storage.py:74
+```
+
+Then `c(ontinue)` or `n(ext)` to step over or `s(tep)`  to step into. 
+
+`l(ist)` to show current line and 11 lines of context.
+
+`p(print)` or `pp` (pretty print) to print a variable. E.g.
+
+```
+p dir(photo)
+pp photo.__dict__
+```
+
+To print all properties of variable photo.
+
+`q(uit)` to exit.
+
+Checkout https://medium.com/instamojo-matters/become-a-pdb-power-user-e3fc4e2774b2
+
 ## Deploying
 
 Based on [http://peterdowns.com/posts/first-time-with-pypi.html](http://peterdowns.com/posts/first-time-with-pypi.html)
@@ -248,6 +279,10 @@ To list just root files only:
 ```
 $ flickr-rsync flickr --exclude-dir '.*' --root-files --list-only
 ```
+
+### Videos
+Movies should work, but flickr doesn't seem to return the original video when you download it again, it returns a 
+processed video that may have slightly downgraded quality and will not have the same checksum.
 
 ## Troubleshooting
 
@@ -300,9 +335,19 @@ flickr-rsync uses the keyword `flickr` as a src or dest to denote pulling the li
 ```
 $ flickr-rsync ./flickr --list-only
 ```
-
+#### If I add tags, they get changed by flickr, e.g. 'extn=mov becomes extnmov'.
+Internally flickr removes all whitespace and special characters, so 'extn mov' and 'extn=mov' match 'extnmov'. You can 
+edit a tag using this URL:
+https://www.flickr.com/photos/{username}/tags/{tagname}/edit/
+or go here to manage all tags:
+https://www.flickr.com/photos/{username}/tags
+And in future put double quotes around your tag to retain special characters
 
 ## Release notes
+
+### v1.0.5 (21 Mar 2018)
+* Support for videos
+* Add tag to maintain original extension 
 
 ### v1.0.4 (2 Nov 2017)
 * Improve retry and throttling, now uses exponential backoff
